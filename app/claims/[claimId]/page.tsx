@@ -1,7 +1,6 @@
 import MessageBubble from "../../../components/MessageBubble";
 import Attachment from "../../../components/Attachment";
 
-// Mock wiadomości dla zgłoszenia
 const messages = [
   {
     id: 1,
@@ -59,14 +58,20 @@ const messages = [
   },
 ];
 
-export default function ClaimPage({ params }: { params: { claimId: string } }) {
+interface ClaimPageProps {
+  params: Promise<{ claimId: string }>;
+}
+
+export default async function ClaimPage({ params }: ClaimPageProps) {
+  const { claimId } = await params;
+
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-semibold mb-6">Claim #{params.claimId}</h1>
+      <h1 className="text-3xl font-semibold mb-6">Claim #{claimId}</h1>
       <div className="flex flex-col gap-6">
         {messages
           .slice(0)
-          .reverse() // najnowsze na górze
+          .reverse()
           .map((msg, index) => (
             <MessageBubble key={msg.id} message={msg} isRight={index % 2 === 0}>
               {msg.attachments.map((att) => (
