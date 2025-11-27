@@ -1,30 +1,41 @@
+// app/claims/page.tsx
 import Link from "next/link";
-import ClaimCard from "../../components/ClaimCard";
+import ClaimCard from "@/components/ClaimCard";
+import { getClaims } from "@/lib/queries/claims";
 
-const claims: {
-  id: string;
-  title: string;
-  status: "In Progress" | "Pending" | "Closed";
-}[] = [
-  { id: "1", title: "Claim #1 - Broken Screen", status: "In Progress" },
-  { id: "2", title: "Claim #2 - Battery Issue", status: "Pending" },
-  { id: "3", title: "Claim #3 - Software Bug", status: "Closed" },
-  { id: "4", title: "Claim #4 - Missing Parts", status: "In Progress" },
-  { id: "5", title: "Claim #5 - Overheating", status: "Pending" },
-];
+export default async function ClaimsPage() {
+  const { data: claims, error } = await getClaims();
 
-export default function ClaimsPage() {
+  if (error) {
+    console.error("Error fetching claims:", error);
+    return <p>Failed to load claims</p>;
+  }
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-semibold mb-6">Warranty Claims</h1>
       <p className="mb-6 text-gray-600 dark:text-zinc-400">
-        This is a mock list of warranty claims. Click on a claim to see details
-        and timeline.
+        List of warranty claims. Click on a claim to see details and timeline
       </p>
+
+      {/* EMPTY STATE */}
+      {(!claims || claims.length === 0) && (
+        <p className="text-gray-500 text-sm border rounded-lg p-4 text-center">
+          No claims found
+        </p>
+      )}
+
+      {/* LIST */}
       <div className="flex flex-col gap-4">
-        {claims.map((claim) => (
+        {claims?.map((claim) => (
           <Link key={claim.id} href={`/claims/${claim.id}`}>
-            <ClaimCard claim={claim} />
+            <ClaimCard
+              claim={{
+                id: claim.id,
+                title: claim.inc_number,
+                status: "In Progress",
+              }}
+            />
           </Link>
         ))}
       </div>
