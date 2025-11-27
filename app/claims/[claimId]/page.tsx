@@ -39,6 +39,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               key={note.id}
               content={note.content}
               createdAt={note.created_at}
+              userName={note.user_name}
               isRight={index % 2 === 0}
             />
           ))

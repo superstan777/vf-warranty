@@ -66,18 +66,21 @@ export type Database = {
           content: string;
           created_at: string;
           id: string;
+          user_name: string;
         };
         Insert: {
           claim_id: string;
           content: string;
           created_at?: string;
           id?: string;
+          user_name: string;
         };
         Update: {
           claim_id?: string;
           content?: string;
           created_at?: string;
           id?: string;
+          user_name?: string;
         };
         Relationships: [
           {
@@ -88,6 +91,27 @@ export type Database = {
             referencedColumns: ["id"];
           }
         ];
+      };
+      pending_notes: {
+        Row: {
+          content: string;
+          created_at: string;
+          id: string;
+          user_name: string;
+        };
+        Insert: {
+          content: string;
+          created_at?: string;
+          id?: string;
+          user_name: string;
+        };
+        Update: {
+          content?: string;
+          created_at?: string;
+          id?: string;
+          user_name?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {

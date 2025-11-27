@@ -2,13 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/client";
+import { auth } from "@/auth";
 
 export async function addNote(claimId: string, content: string) {
+  const session = await auth();
   const supabase = createClient();
 
   const { error } = await supabase.from("notes").insert({
     claim_id: claimId,
     content,
+    user_name: session?.user?.name,
   });
 
   if (error) {
@@ -16,6 +19,5 @@ export async function addNote(claimId: string, content: string) {
     throw new Error("Failed to add note");
   }
 
-  // Odśwież stronę po dodaniu notatki
   revalidatePath(`/claims/${claimId}`);
 }
