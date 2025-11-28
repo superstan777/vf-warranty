@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { content } = body;
+    const { content, user_name } = body;
 
     if (!content) {
       return NextResponse.json({ error: "Missing content" }, { status: 400 });
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       .insert({
         claim_id: "4a839530-0555-42bb-89c1-b33a5f4b41e3",
         content,
-        user_name: "Teams API",
+        user_name,
         origin: "teams",
       })
       .select();

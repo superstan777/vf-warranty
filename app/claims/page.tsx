@@ -1,4 +1,3 @@
-// app/claims/page.tsx
 import Link from "next/link";
 import ClaimCard from "@/components/ClaimCard";
 import { getClaims } from "@/lib/queries/claims";
