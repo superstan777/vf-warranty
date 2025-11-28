@@ -4,16 +4,13 @@ import { htmlToText } from "html-to-text";
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (
-    !authHeader ||
-    authHeader !== `Bearer ${process.env.TEAMS_BOT_API_TOKEN}`
-  ) {
+  if (!authHeader || authHeader !== `Bearer ${process.env.BOT_API_TOKEN}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await req.json();
-    const { content, user_name } = body;
+    const { content, user_name, origin } = body;
     const cleanText = htmlToText(content, { wordwrap: false });
 
     if (!content) {
@@ -27,7 +24,7 @@ export async function POST(req: NextRequest) {
         claim_id: "4a839530-0555-42bb-89c1-b33a5f4b41e3",
         content: cleanText,
         user_name,
-        origin: "teams",
+        origin,
       })
       .select();
 
