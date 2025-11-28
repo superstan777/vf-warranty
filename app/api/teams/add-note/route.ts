@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/client";
+import { htmlToText } from "html-to-text";
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { content, user_name } = body;
+    const cleanText = htmlToText(content, { wordwrap: false });
 
     if (!content) {
       return NextResponse.json({ error: "Missing content" }, { status: 400 });
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
       .from("notes")
       .insert({
         claim_id: "4a839530-0555-42bb-89c1-b33a5f4b41e3",
-        content,
+        content: cleanText,
         user_name,
         origin: "teams",
       })
