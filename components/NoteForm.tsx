@@ -31,7 +31,7 @@ export function NoteForm({ claimId }: { claimId: string }) {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
-      toast.promise(() => addNote(claimId, data.note), {
+      toast.promise(() => addNote(claimId, data.note, "app"), {
         loading: "Adding note...",
         success: "Note added successfully",
         error: "Failed to add note",

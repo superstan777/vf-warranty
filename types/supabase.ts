@@ -66,6 +66,7 @@ export type Database = {
           content: string;
           created_at: string;
           id: string;
+          origin: Database["public"]["Enums"]["origin"];
           user_name: string;
         };
         Insert: {
@@ -73,6 +74,7 @@ export type Database = {
           content: string;
           created_at?: string;
           id?: string;
+          origin: Database["public"]["Enums"]["origin"];
           user_name: string;
         };
         Update: {
@@ -80,6 +82,7 @@ export type Database = {
           content?: string;
           created_at?: string;
           id?: string;
+          origin?: Database["public"]["Enums"]["origin"];
           user_name?: string;
         };
         Relationships: [
@@ -121,7 +124,7 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
-      [_ in never]: never;
+      origin: "app" | "teams" | "mail";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -254,6 +257,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      origin: ["app", "teams", "mail"],
+    },
   },
 } as const;
