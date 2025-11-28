@@ -19,6 +19,8 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
 
   const { data: notes, error: notesError } = await getNotesByClaimId(claimId);
 
+  console.log(notes);
+
   if (notesError) {
     console.error("Error fetching notes:", notesError);
   }
@@ -37,9 +39,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
           notes.map((note, index) => (
             <MessageBubble
               key={note.id}
-              content={note.content}
-              createdAt={note.created_at}
-              userName={note.user_name}
+              note={note}
               isRight={index % 2 === 0}
             />
           ))
