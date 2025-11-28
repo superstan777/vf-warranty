@@ -1,4 +1,3 @@
-// pages/api/teams/add-note.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@/utils/supabase/client";
 
@@ -6,6 +5,14 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const authHeader = req.headers.authorization;
+  if (
+    !authHeader ||
+    authHeader !== `Bearer ${process.env.TEAMS_BOT_API_TOKEN}`
+  ) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
