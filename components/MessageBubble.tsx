@@ -1,3 +1,4 @@
+"use client";
 import { formatDateToLocal24h } from "@/lib/utils";
 import type { Tables } from "@/types/supabase";
 
