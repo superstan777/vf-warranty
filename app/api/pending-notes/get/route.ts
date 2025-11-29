@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       .select("*")
       .eq("user_name", user_name)
       .limit(1)
-      .single();
+      .maybeSingle(); // <-- zamiast .single()
 
     if (error) {
       console.error("Error fetching pending note:", error);
