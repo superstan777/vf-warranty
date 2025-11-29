@@ -36,7 +36,11 @@ export async function POST(req: NextRequest) {
 
     if (!claim) {
       return NextResponse.json(
-        { success: false, reason: "NO_INCIDENT_FOUND" },
+        {
+          success: false,
+          reason: "NO_INCIDENT_FOUND",
+          message: `Incident ${inc_number} does not exist.`,
+        },
         { status: 200 }
       );
     }
@@ -59,8 +63,12 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: true, note: noteData[0] },
-      { status: 201 }
+      {
+        success: true,
+        note: noteData[0],
+        message: "Note successfully added.",
+      },
+      { status: 200 }
     );
   } catch (err: any) {
     console.error(err);
