@@ -36,8 +36,8 @@ export async function POST(req: NextRequest) {
 
     if (!claim) {
       return NextResponse.json(
-        { error: "No such incident found" },
-        { status: 404 }
+        { success: false, reason: "NO_INCIDENT_FOUND" },
+        { status: 200 }
       );
     }
 
