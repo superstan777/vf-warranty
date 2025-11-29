@@ -21,7 +21,27 @@ export async function POST(req: NextRequest) {
 
     const supabase = createClient();
 
-    // Sprawdzenie pending note
+    // 1. Sprawdzenie inc_number w claims
+    const { data: claim, error: claimError } = await supabase
+      .from("claims")
+      .select("id")
+      .eq("inc_number", inc_number)
+      .limit(1)
+      .single();
+
+    if (claimError || !claim) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "INCIDENT_NOT_FOUND",
+          message:
+            "Incident number does not exist. Provide a valid incident number.",
+        },
+        { status: 200 }
+      );
+    }
+
+    // 2. Pobranie pending note dla user_name
     const { data: pending, error: pendingError } = await supabase
       .from("pending_notes")
       .select("*")
@@ -34,47 +54,18 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           reason: "NO_PENDING_NOTE",
-          message: "No pending note found for user",
+          message: "No pending note found for this user.",
         },
         { status: 200 }
       );
     }
 
-    // Obsługa cancel
-    if (inc_number.toLowerCase() === "cancel") {
-      await supabase.from("pending_notes").delete().eq("user_name", user_name);
-      return NextResponse.json(
-        { success: true, message: "Action has been cancelled" },
-        { status: 200 }
-      );
-    }
-
-    // Sprawdzenie inc_number w claims
-    const { data: claim } = await supabase
-      .from("claims")
-      .select("id")
-      .eq("inc_number", inc_number)
-      .limit(1)
-      .single();
-
-    if (!claim) {
-      return NextResponse.json(
-        {
-          success: false,
-          reason: "INCIDENT_NOT_FOUND",
-          message:
-            'Incident number does not exist. Provide a valid incident number or type "cancel" to abort action.',
-        },
-        { status: 200 }
-      );
-    }
-
-    const cleanText = pending.content;
+    // 3. Dodanie notatki do notes
     const { data: noteData, error: noteError } = await supabase
       .from("notes")
       .insert({
         claim_id: claim.id,
-        content: cleanText,
+        content: pending.content,
         user_name: pending.user_name,
         origin: "teams",
       })
@@ -92,8 +83,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 4. Usunięcie pending note
     await supabase.from("pending_notes").delete().eq("user_name", user_name);
 
+    // 5. Zwrócenie info, że note dodane
     return NextResponse.json(
       {
         success: true,

@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
 
     const supabase = createClient();
 
+    // Sprawdzenie, czy pending note już istnieje
     const { data: existing } = await supabase
       .from("pending_notes")
       .select("id")
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Dodanie pending note
     const cleanText = htmlToText(content, { wordwrap: false });
     const { data: pendingData, error: insertError } = await supabase
       .from("pending_notes")
