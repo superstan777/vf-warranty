@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/client";
+import { htmlToText } from "html-to-text";
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -20,12 +21,13 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createClient();
+    const cleanIncNumber = htmlToText(inc_number, { wordwrap: false });
 
     // 1. Sprawdzenie inc_number w claims
     const { data: claim, error: claimError } = await supabase
       .from("claims")
       .select("id")
-      .eq("inc_number", inc_number)
+      .eq("inc_number", cleanIncNumber)
       .limit(1)
       .single();
 
@@ -36,7 +38,6 @@ export async function POST(req: NextRequest) {
           reason: "INCIDENT_NOT_FOUND",
           message:
             "Incident number does not exist. Provide a valid incident number.",
-          inc_number,
         },
         { status: 200 }
       );
