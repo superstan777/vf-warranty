@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
           reason: "INCIDENT_NOT_FOUND",
           message:
             "Incident number does not exist. Provide a valid incident number.",
+          inc_number,
         },
         { status: 200 }
       );
