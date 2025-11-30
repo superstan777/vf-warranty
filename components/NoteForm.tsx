@@ -47,8 +47,8 @@ export function NoteForm({ claimId, status }: NoteFormProps) {
 
   if (status === "resolved" || status === "cancelled") {
     const messages = {
-      resolved: "This claim has been resolved.",
-      cancelled: "This claim has been cancelled.",
+      resolved: "This claim has been resolved",
+      cancelled: "This claim has been cancelled",
     };
 
     return (
