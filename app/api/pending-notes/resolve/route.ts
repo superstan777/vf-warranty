@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/client";
 import { htmlToText } from "html-to-text";
 
+function normalizeIncNumber(raw: string) {
+  const clean = htmlToText(raw, { wordwrap: false }).toUpperCase().trim();
+
+  const match = clean.match(/INC(\d+)/i);
+  if (!match) return clean;
+
+  const num = match[1];
+  const padded = num.padStart(5, "0");
+
+  return `INC${padded}`;
+}
+
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader || authHeader !== `Bearer ${process.env.BOT_API_TOKEN}`) {
@@ -21,7 +33,8 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createClient();
-    const cleanIncNumber = htmlToText(inc_number, { wordwrap: false });
+
+    const cleanIncNumber = normalizeIncNumber(inc_number);
 
     // 1. Sprawdzenie inc_number w claims
     const { data: claim, error: claimError } = await supabase
@@ -62,7 +75,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Dodanie notatki do notes
+    // 3. Dodanie notatki
     const { data: noteData, error: noteError } = await supabase
       .from("notes")
       .insert({
@@ -85,10 +98,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Usunięcie pending note
+    // 4. Usuń pending note
     await supabase.from("pending_notes").delete().eq("user_name", user_name);
 
-    // 5. Zwrócenie info, że note dodane
+    // 5. Zwróć sukces
     return NextResponse.json(
       {
         success: true,
