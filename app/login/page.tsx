@@ -1,25 +1,27 @@
-"use client";
-
-import { signIn } from "next-auth/react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { HomeButton } from "@/components/HomeButton";
+import { SignInWithMicrosoftButton } from "@/components/SignInButton";
 
 export default function LoginPage() {
   return (
-    <div className="w-screen h-screen flex items-center justify-center">
-      <Button
-        className="p-6 flex bg-slate-900 rounded-lg cursor-pointer"
-        onClick={() => signIn("microsoft-entra-id")}
-      >
-        <span>Sign in with Microsoft Entra ID</span>
-        <Image
-          src="https://authjs.dev/img/providers/microsoft-entra-id.svg"
-          alt="ms-entra-logo"
-          loading="lazy"
-          height="24"
-          width="24"
-        />
-      </Button>
+    <div className="grid min-h-svh lg:grid-cols-2">
+      <div className="flex flex-col gap-4 p-6 md:p-10">
+        <div className="flex justify-center items-center gap-2 md:justify-start">
+          <HomeButton withText={true} />
+        </div>
+        <div className="flex flex-1 items-center justify-center">
+          <SignInWithMicrosoftButton />
+        </div>
+      </div>
+
+      <div className=" relative hidden lg:flex items-center justify-center">
+        <div className="w-lg h-lg overflow-hidden rounded-t-full">
+          <img
+            src="https://group.vattenfall.com/cdn-cgi/image/width=1494,format=auto,fit=crop,height=1494/globalassets/com/sustainability/beach_sun_1x1.jpg"
+            alt="Image"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </div>
     </div>
   );
 }
