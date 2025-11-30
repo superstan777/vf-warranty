@@ -31,7 +31,7 @@ export default async function ClaimsPage() {
             <ClaimCard
               claim={{
                 id: claim.id,
-                title: claim.inc_number,
+                title: claim.inc_number ? claim.inc_number : "No INC number",
                 status: claim.status,
               }}
             />

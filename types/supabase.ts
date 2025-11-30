@@ -44,21 +44,21 @@ export type Database = {
           created_at: string
           description: string
           id: string
-          inc_number: string
+          inc_number: string | null
           status: Database["public"]["Enums"]["claim_status"]
         }
         Insert: {
           created_at?: string
           description: string
           id?: string
-          inc_number: string
+          inc_number?: string | null
           status?: Database["public"]["Enums"]["claim_status"]
         }
         Update: {
           created_at?: string
           description?: string
           id?: string
-          inc_number?: string
+          inc_number?: string | null
           status?: Database["public"]["Enums"]["claim_status"]
         }
         Relationships: []
