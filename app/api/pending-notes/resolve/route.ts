@@ -33,13 +33,12 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createClient();
-
     const cleanIncNumber = normalizeIncNumber(inc_number);
 
     // 1. Sprawdzenie inc_number w claims
     const { data: claim, error: claimError } = await supabase
       .from("claims")
-      .select("id")
+      .select("id,status")
       .eq("inc_number", cleanIncNumber)
       .limit(1)
       .single();
@@ -50,7 +49,22 @@ export async function POST(req: NextRequest) {
           success: false,
           reason: "INCIDENT_NOT_FOUND",
           message:
-            "Incident number does not exist. Provide a valid incident number.",
+            "Incident number does not exist. Provide a valid incident number",
+        },
+        { status: 200 }
+      );
+    }
+
+    // 1a. Sprawdzenie statusu claima
+    if (claim.status === "cancelled" || claim.status === "resolved") {
+      return NextResponse.json(
+        {
+          success: false,
+          status: claim.status,
+          message:
+            claim.status === "cancelled"
+              ? "This claim has been cancelled"
+              : "This claim has been resolved",
         },
         { status: 200 }
       );
@@ -69,7 +83,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           reason: "NO_PENDING_NOTE",
-          message: "No pending note found for this user.",
+          message: "No pending note found for this user",
         },
         { status: 200 }
       );
@@ -105,7 +119,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Note has been posted.",
+        message: "Note has been posted",
         note: noteData[0],
       },
       { status: 200 }
