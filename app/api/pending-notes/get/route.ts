@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           reason: "NO_PENDING_NOTE",
-          message: "No pending note found for this user.",
+          message: "No pending note found for this user",
         },
         { status: 200 }
       );
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Pending note found.",
+        message: "Pending note found",
         pending_note: existingPending,
       },
       { status: 200 }
