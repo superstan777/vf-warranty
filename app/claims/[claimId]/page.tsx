@@ -38,7 +38,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
         <p className="text-gray-600 dark:text-zinc-400">{claim.description}</p>
       </div>
 
-      <NoteForm claimId={claimId} />
+      <NoteForm status={claim.status} claimId={claimId} />
 
       <div className="flex flex-col gap-6">
         {notes && notes.length > 0 ? (

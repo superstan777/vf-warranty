@@ -1,9 +1,9 @@
 "use client";
 
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import * as z from "zod";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-
 import { Textarea } from "./ui/textarea";
 import { addNote } from "@/app/claims/[claimId]/actions";
 
@@ -21,26 +20,44 @@ const formSchema = z.object({
   note: z.string().min(1, "Note cannot be empty"),
 });
 
-export function NoteForm({ claimId }: { claimId: string }) {
+interface NoteFormProps {
+  claimId: string;
+  status: "in_progress" | "resolved" | "cancelled";
+}
+
+export function NoteForm({ claimId, status }: NoteFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      note: "",
-    },
+    defaultValues: { note: "" },
   });
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
-      toast.promise(() => addNote(claimId, data.note, "app"), {
+      await toast.promise(() => addNote(claimId, data.note, "app"), {
         loading: "Adding note...",
         success: "Note added successfully",
         error: "Failed to add note",
       });
 
       form.reset();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
+  }
+
+  if (status === "resolved" || status === "cancelled") {
+    const messages = {
+      resolved: "This claim has been resolved.",
+      cancelled: "This claim has been cancelled.",
+    };
+
+    return (
+      <Card className="w-full">
+        <CardContent className="text-center text-gray-700 dark:text-zinc-300 font-medium">
+          {messages[status]}
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -56,7 +73,6 @@ export function NoteForm({ claimId }: { claimId: string }) {
                   <FieldLabel htmlFor="note-form-content">
                     Add a new note
                   </FieldLabel>
-
                   <Textarea
                     {...field}
                     id="note-form-content"
@@ -65,7 +81,6 @@ export function NoteForm({ claimId }: { claimId: string }) {
                     className="min-h-24 resize-none"
                     aria-invalid={fieldState.invalid}
                   />
-
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}
