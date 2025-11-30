@@ -1,5 +1,6 @@
 import { NoteForm } from "@/components/NoteForm";
 import MessageBubble from "../../../components/MessageBubble";
+import StatusTag from "@/components/StatusTag";
 import { getClaimById } from "@/lib/queries/claims";
 import { getNotesByClaimId } from "@/lib/queries/notes";
 
@@ -18,18 +19,23 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
   }
 
   const { data: notes, error: notesError } = await getNotesByClaimId(claimId);
-
-  console.log(notes);
-
   if (notesError) {
     console.error("Error fetching notes:", notesError);
   }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-semibold mb-2">{claim.inc_number}</h1>
-        <p className="text-gray-600 mb-6">{claim.description}</p>
+    <div className="p-8 max-w-3xl mx-auto flex flex-col gap-8">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-semibold">{claim.inc_number}</h1>
+          <StatusTag status={claim.status} />
+        </div>
+
+        <h2 className="text-xl font-medium text-black dark:text-zinc-100">
+          {claim.title}
+        </h2>
+
+        <p className="text-gray-600 dark:text-zinc-400">{claim.description}</p>
       </div>
 
       <NoteForm claimId={claimId} />
