@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VF Warranty Claims",
+  title: "Vattenfall Warranty Claims",
   description:
     "A warranty claim management system with teams and outlook automations",
 };

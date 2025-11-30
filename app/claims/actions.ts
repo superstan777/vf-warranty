@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/client";
 import { auth } from "@/auth";
 
-export async function createClaim(description: string) {
+export async function createClaim(title: string, description: string) {
   const session = await auth();
   const supabase = createClient();
 
@@ -15,6 +15,7 @@ export async function createClaim(description: string) {
   const { data, error } = await supabase
     .from("claims")
     .insert({
+      title,
       description,
       user_name: session.user.name,
     })

@@ -42,24 +42,30 @@ export type Database = {
       claims: {
         Row: {
           created_at: string
+          created_by: string
           description: string
           id: string
           inc_number: string | null
           status: Database["public"]["Enums"]["claim_status"]
+          title: string
         }
         Insert: {
           created_at?: string
+          created_by: string
           description: string
           id?: string
           inc_number?: string | null
           status?: Database["public"]["Enums"]["claim_status"]
+          title: string
         }
         Update: {
           created_at?: string
+          created_by?: string
           description?: string
           id?: string
           inc_number?: string | null
           status?: Database["public"]["Enums"]["claim_status"]
+          title?: string
         }
         Relationships: []
       }
