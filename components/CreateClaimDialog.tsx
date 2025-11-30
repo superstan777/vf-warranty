@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -27,6 +28,9 @@ const formSchema = z.object({
 });
 
 export function CreateClaimDialog() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,31 +41,43 @@ export function CreateClaimDialog() {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
-      toast.promise(() => createClaim(data.title, data.description), {
+      setIsSubmitting(true);
+
+      const promise = createClaim(data.title, data.description);
+
+      toast.promise(promise, {
         loading: "Creating claim...",
         success: "Claim created successfully",
         error: "Failed to create claim",
       });
 
+      await promise;
+
       form.reset();
-    } catch (error) {
-      console.error(error);
+      setIsOpen(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
     <Dialog
-      onOpenChange={(isOpen) => {
-        if (!isOpen) {
-          // resetujemy pola i błędy przy zamykaniu dialogu
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+
+        if (!open) {
           form.reset();
           form.clearErrors();
         }
       }}
     >
       <DialogTrigger asChild>
-        <Button>Create New Claim</Button>
+        <Button onClick={() => setIsOpen(true)}>Create New Claim</Button>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Claim</DialogTitle>
@@ -82,6 +98,7 @@ export function CreateClaimDialog() {
                   id="title"
                   placeholder="Enter claim title..."
                   aria-invalid={fieldState.invalid}
+                  disabled={isSubmitting}
                 />
                 {fieldState.invalid && (
                   <p className="text-red-600 text-sm">
@@ -105,6 +122,7 @@ export function CreateClaimDialog() {
                   rows={10}
                   className="h-40 min-h-40 max-h-40 resize-none overflow-y-auto"
                   aria-invalid={fieldState.invalid}
+                  disabled={isSubmitting}
                 />
                 {fieldState.invalid && (
                   <p className="text-red-600 text-sm">
@@ -118,9 +136,16 @@ export function CreateClaimDialog() {
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline" disabled={isSubmitting}>
+              Cancel
+            </Button>
           </DialogClose>
-          <Button type="submit" form="create-claim-form">
+
+          <Button
+            type="submit"
+            form="create-claim-form"
+            disabled={isSubmitting}
+          >
             Create Claim
           </Button>
         </DialogFooter>

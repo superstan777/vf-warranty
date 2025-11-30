@@ -17,7 +17,7 @@ export async function createClaim(title: string, description: string) {
     .insert({
       title,
       description,
-      user_name: session.user.name,
+      created_by: session.user.name,
     })
     .select();
 
@@ -26,8 +26,7 @@ export async function createClaim(title: string, description: string) {
     throw new Error("Failed to create claim");
   }
 
-  // Opcjonalnie odświeżamy listę claims
   revalidatePath("/claims");
 
-  return data[0]; // zwracamy nowo utworzony claim
+  return data[0];
 }
