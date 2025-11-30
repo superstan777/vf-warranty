@@ -1,17 +1,21 @@
+import type { Tables } from "@/types/supabase";
+
+type Claim = Tables<"claims">;
+
 interface ClaimCardProps {
   claim: {
     id: string;
     title: string;
-    status: "In Progress" | "Pending" | "Closed";
+    status: Claim["status"];
   };
 }
 
 export default function ClaimCard({ claim }: ClaimCardProps) {
   // Kolor statusu w zależności od wartości
   const statusColor = {
-    "In Progress": "text-yellow-600 dark:text-yellow-400",
-    Pending: "text-blue-600 dark:text-blue-400",
-    Closed: "text-green-600 dark:text-green-400",
+    in_progress: "text-yellow-600 dark:text-yellow-400",
+    cancelled: "text-blue-600 dark:text-blue-400",
+    resolved: "text-green-600 dark:text-green-400",
   };
 
   return (

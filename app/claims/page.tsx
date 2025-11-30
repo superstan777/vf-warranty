@@ -32,7 +32,7 @@ export default async function ClaimsPage() {
               claim={{
                 id: claim.id,
                 title: claim.inc_number,
-                status: "In Progress",
+                status: claim.status,
               }}
             />
           </Link>
