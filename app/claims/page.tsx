@@ -29,13 +29,7 @@ export default async function ClaimsPage() {
         ) : (
           claims.map((claim) => (
             <Link key={claim.id} href={`/claims/${claim.id}`}>
-              <ClaimCard
-                claim={{
-                  id: claim.id,
-                  title: claim.inc_number ? claim.inc_number : "No INC number",
-                  status: claim.status,
-                }}
-              />
+              <ClaimCard claim={claim} />
             </Link>
           ))
         )}
