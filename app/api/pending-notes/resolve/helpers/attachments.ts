@@ -5,6 +5,8 @@ export async function processAttachments(noteId: string, attachments: any[]) {
   const supabase = createClient();
   const botToken = await getBotAccessToken();
 
+  console.log(attachments);
+
   console.log(
     `Processing ${attachments.length} attachments for note ${noteId}`
   );
