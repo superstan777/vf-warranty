@@ -5,16 +5,14 @@ export async function processAttachments(noteId: string, attachments: any[]) {
   const supabase = createClient();
   const botToken = await getBotAccessToken();
 
-  console.log(attachments);
-
   console.log(
     `Processing ${attachments.length} attachments for note ${noteId}`
   );
 
   for (const att of attachments) {
     try {
-      // Forwarded message
-      if (att.contentType === "forwardedMessageReference") {
+      // Tekstowy forwarded message – content_url jest null
+      if (!att.content_url) {
         console.log(
           `Forwarded message detected, saving content as is for note ${noteId}`
         );
@@ -31,14 +29,14 @@ export async function processAttachments(noteId: string, attachments: any[]) {
           console.error("DB error inserting forwarded message:", error);
         else console.log("Forwarded message saved successfully");
 
-        // Plik / obrazek
-      } else if (att.contentType === "reference" && att.contentUrl) {
-        console.log(`Downloading file from ${att.contentUrl}`);
-        const fileData = await fetch(att.contentUrl, {
+        // Plik / obrazek – content_url istnieje
+      } else {
+        console.log(`Downloading file from ${att.content_url}`);
+        const fileData = await fetch(att.content_url, {
           headers: { Authorization: `Bearer ${botToken}` },
         }).then((res) => res.arrayBuffer());
 
-        const fileName = att.name || `file_${Date.now()}`;
+        const fileName = att.file_name || `file_${Date.now()}`;
         const filePath = `attachments/note_${noteId}/${fileName}`;
         console.log(`Uploading file to Supabase Storage at path: ${filePath}`);
 
@@ -68,8 +66,6 @@ export async function processAttachments(noteId: string, attachments: any[]) {
         if (dbError)
           console.error("Failed to insert attachment record:", dbError);
         else console.log("Attachment record inserted into DB successfully");
-      } else {
-        console.log("Skipping unknown attachment type:", att.contentType);
       }
     } catch (err) {
       console.error("Failed to process attachment:", err);
