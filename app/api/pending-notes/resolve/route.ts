@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/client";
-import { htmlToText } from "html-to-text";
-
-function normalizeIncNumber(raw: string) {
-  const clean = htmlToText(raw, { wordwrap: false }).toUpperCase().trim();
-
-  const match = clean.match(/INC(\d+)/i);
-  if (!match) return clean;
-
-  const num = match[1];
-  const padded = num.padStart(5, "0");
-
-  return `INC${padded}`;
-}
+import {
+  normalizeIncNumber,
+  fetchPendingNoteWithAttachments,
+} from "./helpers/pending";
+import { insertNote } from "./helpers/notes";
+import { processAttachments } from "./helpers/attachments";
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -35,7 +28,6 @@ export async function POST(req: NextRequest) {
     const supabase = createClient();
     const cleanIncNumber = normalizeIncNumber(inc_number);
 
-    // 1. Sprawdzenie inc_number w claims
     const { data: claim, error: claimError } = await supabase
       .from("claims")
       .select("id,status")
@@ -48,103 +40,43 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           reason: "INCIDENT_NOT_FOUND",
-          message:
-            "Incident number does not exist. Provide a valid incident number",
+          message: "Incident number does not exist",
         },
         { status: 200 }
       );
     }
 
-    // 1a. Sprawdzenie statusu claima
     if (claim.status === "cancelled" || claim.status === "resolved") {
       return NextResponse.json(
         {
           success: false,
           status: claim.status,
           message:
-            claim.status === "cancelled"
-              ? "This claim has been cancelled"
-              : "This claim has been resolved",
+            claim.status === "cancelled" ? "Claim cancelled" : "Claim resolved",
         },
         { status: 200 }
       );
     }
 
-    // 2. Pobranie pending note dla user_name
-    const { data: pending, error: pendingError } = await supabase
-      .from("pending_notes")
-      .select("*")
-      .eq("user_name", user_name)
-      .limit(1)
-      .single();
-
-    if (pendingError || !pending) {
+    const { pendingNote, pendingAttachments } =
+      await fetchPendingNoteWithAttachments(user_name);
+    if (!pendingNote)
       return NextResponse.json(
         {
           success: false,
           reason: "NO_PENDING_NOTE",
-          message: "No pending note found for this user",
+          message: "No pending note",
         },
         { status: 200 }
       );
-    }
 
-    // 2a. Pobranie pending attachments
-    const { data: pendingAttachments } = await supabase
-      .from("pending_attachments")
-      .select("*")
-      .eq("pending_note_id", pending.id);
+    const note = await insertNote(claim.id, pendingNote);
+    await processAttachments(note.id, pendingAttachments);
 
-    // 3. Dodanie notatki
-    const { data: noteData, error: noteError } = await supabase
-      .from("notes")
-      .insert({
-        claim_id: claim.id,
-        content: pending.content,
-        user_name: pending.user_name,
-        origin: "teams",
-      })
-      .select()
-      .single();
-
-    if (noteError || !noteData) {
-      console.error("Failed to insert note:", noteError);
-      return NextResponse.json(
-        {
-          success: false,
-          reason: "NOTE_INSERT_FAILED",
-          message: "Could not save note",
-        },
-        { status: 200 }
-      );
-    }
-
-    // 3a. Dodanie attachments do note
-    if (pendingAttachments && pendingAttachments.length > 0) {
-      const attachmentsToInsert = pendingAttachments.map((att) => ({
-        note_id: noteData.id,
-        content: att.content,
-      }));
-
-      const { error: attachError } = await supabase
-        .from("attachments")
-        .insert(attachmentsToInsert);
-
-      if (attachError) {
-        console.error("Failed to insert attachments:", attachError);
-      }
-    }
-
-    // 4. Usuń pending note (pending attachments usuną się automatycznie dzięki cascade)
     await supabase.from("pending_notes").delete().eq("user_name", user_name);
 
-    // 5. Zwróć sukces
     return NextResponse.json(
-      {
-        success: true,
-        message: "Note has been posted",
-        note: noteData,
-      },
+      { success: true, message: "Note posted", note },
       { status: 200 }
     );
   } catch (err: any) {
