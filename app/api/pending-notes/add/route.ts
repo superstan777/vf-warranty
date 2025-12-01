@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/client";
 import { htmlToText } from "html-to-text";
-//zrobic batch dodawanie pending attachments
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -80,7 +79,9 @@ export async function POST(req: NextRequest) {
             return null;
           }
         })
-        .filter(Boolean); // usuwa null
+        .filter(
+          (a): a is { pending_note_id: string; content: string } => a !== null
+        ); // usuwa null i typ jest bezpieczny
 
       if (attachmentsToInsert.length > 0) {
         const { error: attachError } = await supabase
