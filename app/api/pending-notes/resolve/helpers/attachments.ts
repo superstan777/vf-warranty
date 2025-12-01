@@ -32,7 +32,7 @@ export async function processAttachments(noteId: string, attachments: any[]) {
         // Plik / obrazek – content_url istnieje
       } else {
         console.log(`Downloading file from ${att.content_url}`);
-        const fileData = await fetch(att.content_url, {
+        const fileData = await fetch(att.content_url + "?download=1", {
           headers: { Authorization: `Bearer ${botToken}` },
         }).then((res) => res.arrayBuffer());
 
