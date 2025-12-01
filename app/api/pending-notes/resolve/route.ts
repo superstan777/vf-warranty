@@ -89,6 +89,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 2a. Pobranie pending attachments
+    const { data: pendingAttachments } = await supabase
+      .from("pending_attachments")
+      .select("*")
+      .eq("pending_note_id", pending.id);
+
     // 3. Dodanie notatki
     const { data: noteData, error: noteError } = await supabase
       .from("notes")
@@ -96,11 +102,12 @@ export async function POST(req: NextRequest) {
         claim_id: claim.id,
         content: pending.content,
         user_name: pending.user_name,
-        origin: "teams",
+        origin: pending.origin || "teams",
       })
-      .select();
+      .select()
+      .single();
 
-    if (noteError || !noteData || noteData.length === 0) {
+    if (noteError || !noteData) {
       console.error("Failed to insert note:", noteError);
       return NextResponse.json(
         {
@@ -112,7 +119,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Usuń pending note
+    // 3a. Dodanie attachments do note
+    if (pendingAttachments && pendingAttachments.length > 0) {
+      const attachmentsToInsert = pendingAttachments.map((att) => ({
+        note_id: noteData.id,
+        content: att.content,
+      }));
+
+      const { error: attachError } = await supabase
+        .from("attachments")
+        .insert(attachmentsToInsert);
+
+      if (attachError) {
+        console.error("Failed to insert attachments:", attachError);
+      }
+    }
+
+    // 4. Usuń pending note (pending attachments usuną się automatycznie dzięki cascade)
     await supabase.from("pending_notes").delete().eq("user_name", user_name);
 
     // 5. Zwróć sukces
@@ -120,12 +143,12 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         message: "Note has been posted",
-        note: noteData[0],
+        note: noteData,
       },
       { status: 200 }
     );
   } catch (err: any) {
-    console.error(err);
+    console.error("Unhandled exception:", err);
     return NextResponse.json(
       { success: false, reason: "UNHANDLED_EXCEPTION" },
       { status: 200 }
