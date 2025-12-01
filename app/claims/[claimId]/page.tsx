@@ -3,6 +3,7 @@ import MessageBubble from "../../../components/MessageBubble";
 import StatusTag from "@/components/StatusTag";
 import { getClaimById } from "@/lib/queries/claims";
 import { getNotesByClaimId } from "@/lib/queries/notes";
+import SystemMessageBubble from "@/components/SystemMessageBubble";
 
 interface ClaimPageProps {
   params: Promise<{ claimId: string }>;
@@ -53,6 +54,10 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
           <p className="text-gray-500 text-sm text-center">No notes found</p>
         )}
       </div>
+      <SystemMessageBubble
+        text={`Claim was created by ${claim.created_by ?? "Unknown user"}`}
+        createdAt={claim.created_at}
+      />
     </div>
   );
 }
