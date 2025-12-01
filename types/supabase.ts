@@ -171,22 +171,28 @@ export type Database = {
       }
       pending_attachments: {
         Row: {
-          content: string
+          content: string | null
+          content_url: string | null
           created_at: string
+          file_name: string | null
           id: string
-          pending_note_id: string | null
+          pending_note_id: string
         }
         Insert: {
-          content: string
+          content?: string | null
+          content_url?: string | null
           created_at?: string
+          file_name?: string | null
           id?: string
-          pending_note_id?: string | null
+          pending_note_id: string
         }
         Update: {
-          content?: string
+          content?: string | null
+          content_url?: string | null
           created_at?: string
+          file_name?: string | null
           id?: string
-          pending_note_id?: string | null
+          pending_note_id?: string
         }
         Relationships: [
           {

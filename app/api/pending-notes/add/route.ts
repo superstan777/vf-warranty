@@ -69,44 +69,65 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Dodanie attachments jeśli istnieją
-    if (parsedAttachments.length > 0) {
-      const attachmentsToInsert = parsedAttachments
-        .map((attachment) => {
-          try {
-            const jsonContent =
-              typeof attachment.content === "string"
-                ? JSON.parse(attachment.content)
-                : attachment.content;
-
-            const originalHtml = jsonContent.originalMessageContent;
-            if (!originalHtml) return null;
-
-            const cleanedContent = htmlToText(originalHtml, {
-              wordwrap: false,
-            });
-
+    // Przygotowanie attachments do inserta
+    const attachmentsToInsert = parsedAttachments
+      .map((attachment) => {
+        try {
+          // Forwarded message
+          if (
+            attachment.contentType === "forwardedMessageReference" &&
+            attachment.content
+          ) {
             return {
               pending_note_id: pendingNote.id,
-              content: cleanedContent,
-            };
-          } catch (err) {
-            console.error("Failed to process attachment:", err);
-            return null;
+              content: attachment.content,
+              contentUrl: null,
+              name: null,
+            } as const;
           }
-        })
-        .filter(
-          (a): a is { pending_note_id: string; content: string } => a !== null
-        );
 
-      if (attachmentsToInsert.length > 0) {
-        const { error: attachError } = await supabase
-          .from("pending_attachments")
-          .insert(attachmentsToInsert);
+          // Plik / obrazek
+          if (attachment.contentType === "reference" && attachment.contentUrl) {
+            return {
+              pending_note_id: pendingNote.id,
+              content: null,
+              contentUrl: attachment.contentUrl,
+              name: attachment.name || "file",
+            } as const;
+          }
 
-        if (attachError) {
-          console.error("Failed to insert pending attachments:", attachError);
+          return null;
+        } catch (err) {
+          console.error("Failed to process attachment:", err);
+          return null;
         }
+      })
+      .filter(
+        (
+          a
+        ): a is
+          | {
+              pending_note_id: string;
+              content: string;
+              contentUrl: null;
+              name: null;
+            }
+          | {
+              pending_note_id: string;
+              content: null;
+              contentUrl: string;
+              name: string;
+            } => a !== null
+      );
+
+    // Dodanie attachments do bazy
+    if (attachmentsToInsert.length > 0) {
+      const { error: attachError } = await supabase
+        .from("pending_attachments")
+        .insert(attachmentsToInsert);
+
+      if (attachError) {
+        console.error("Failed to insert pending attachments:", attachError);
       }
     }
 
