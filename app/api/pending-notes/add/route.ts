@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { user_name, content, origin } = await req.json();
+    const { user_name, content, origin, attachments } = await req.json();
     if (!user_name || !content) {
       return NextResponse.json(
         { success: false, reason: "MISSING_FIELDS" },
@@ -51,12 +51,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const pendingNote = pendingData[0];
+
+    // Dodanie attachments jeśli istnieją
+    if (attachments && Array.isArray(attachments)) {
+      const attachmentsToInsert = attachments
+        .map((attachment) => {
+          try {
+            const jsonContent =
+              typeof attachment.content === "string"
+                ? JSON.parse(attachment.content)
+                : attachment.content;
+
+            const originalHtml = jsonContent.originalMessageContent;
+            if (!originalHtml) return null;
+
+            const cleanedContent = htmlToText(originalHtml, {
+              wordwrap: false,
+            });
+
+            return {
+              pending_note_id: pendingNote.id,
+              content: cleanedContent,
+            };
+          } catch (err) {
+            console.error("Failed to process attachment:", err);
+            return null;
+          }
+        })
+        .filter(
+          (a): a is { pending_note_id: string; content: string } => a !== null
+        ); // usuwa null i typ jest bezpieczny
+
+      if (attachmentsToInsert.length > 0) {
+        const { error: attachError } = await supabase
+          .from("pending_attachments")
+          .insert(attachmentsToInsert);
+
+        if (attachError) {
+          console.error("Failed to insert pending attachments:", attachError);
+        }
+      }
+    }
+
     return NextResponse.json(
       {
         success: true,
         message:
           'Pending note added. Please provide incident number or type "cancel" to abort action.',
-        pending_note: pendingData[0],
+        pending_note: pendingNote,
       },
       { status: 200 }
     );

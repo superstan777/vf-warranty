@@ -39,6 +39,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      attachments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          note_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          note_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          note_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claims: {
         Row: {
           created_at: string
@@ -100,6 +129,35 @@ export type Database = {
             columns: ["claim_id"]
             isOneToOne: false
             referencedRelation: "claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_attachments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          pending_note_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          pending_note_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          pending_note_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_attachments_pending_note_id_fkey"
+            columns: ["pending_note_id"]
+            isOneToOne: false
+            referencedRelation: "pending_notes"
             referencedColumns: ["id"]
           },
         ]
