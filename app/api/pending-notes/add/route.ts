@@ -81,9 +81,9 @@ export async function POST(req: NextRequest) {
             return {
               pending_note_id: pendingNote.id,
               content: attachment.content,
-              contentUrl: null,
-              name: null,
-            } as const;
+              content_url: null,
+              file_name: null,
+            };
           }
 
           // Plik / obrazek
@@ -91,9 +91,9 @@ export async function POST(req: NextRequest) {
             return {
               pending_note_id: pendingNote.id,
               content: null,
-              contentUrl: attachment.contentUrl,
-              name: attachment.name || "file",
-            } as const;
+              content_url: attachment.contentUrl,
+              file_name: attachment.name || "file",
+            };
           }
 
           return null;
@@ -102,23 +102,7 @@ export async function POST(req: NextRequest) {
           return null;
         }
       })
-      .filter(
-        (
-          a
-        ): a is
-          | {
-              pending_note_id: string;
-              content: string;
-              contentUrl: null;
-              name: null;
-            }
-          | {
-              pending_note_id: string;
-              content: null;
-              contentUrl: string;
-              name: string;
-            } => a !== null
-      );
+      .filter((a): a is NonNullable<typeof a> => a !== null);
 
     // Dodanie attachments do bazy
     if (attachmentsToInsert.length > 0) {

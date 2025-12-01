@@ -18,6 +18,8 @@ export async function processAttachments(noteId: string, attachments: any[]) {
         const { error } = await supabase.from("attachments").insert({
           note_id: noteId,
           content: att.content,
+          content_url: null,
+          file_name: null,
         });
         if (error)
           console.error("DB error inserting forwarded message:", error);
@@ -48,7 +50,9 @@ export async function processAttachments(noteId: string, attachments: any[]) {
 
         const { error: dbError } = await supabase.from("attachments").insert({
           note_id: noteId,
-          content: filePath,
+          content: null,
+          content_url: filePath,
+          file_name: fileName,
         });
 
         if (dbError) {
