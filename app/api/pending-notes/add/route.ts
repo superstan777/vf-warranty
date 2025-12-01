@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { user_name, content, origin, attachments } = await req.json();
+    const { user_name, content, attachments } = await req.json();
+
     if (!user_name || !content) {
       return NextResponse.json(
         { success: false, reason: "MISSING_FIELDS" },
@@ -40,10 +41,11 @@ export async function POST(req: NextRequest) {
     const cleanText = htmlToText(content, { wordwrap: false });
     const { data: pendingData, error: insertError } = await supabase
       .from("pending_notes")
-      .insert({ user_name, content: cleanText, origin })
-      .select();
+      .insert({ user_name, content: cleanText })
+      .select()
+      .single();
 
-    if (insertError || !pendingData || pendingData.length === 0) {
+    if (insertError || !pendingData) {
       console.error("Failed to insert pending note:", insertError);
       return NextResponse.json(
         { success: false, reason: "PENDING_INSERT_FAILED" },
@@ -51,11 +53,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pendingNote = pendingData[0];
+    const pendingNote = pendingData;
+
+    // Parsowanie attachments
+    let parsedAttachments: any[] = [];
+    if (attachments) {
+      try {
+        parsedAttachments =
+          typeof attachments === "string"
+            ? JSON.parse(attachments)
+            : attachments;
+      } catch (err) {
+        console.error("Failed to parse attachments JSON:", err);
+        parsedAttachments = [];
+      }
+    }
 
     // Dodanie attachments jeśli istnieją
-    if (attachments && Array.isArray(attachments)) {
-      const attachmentsToInsert = attachments
+    if (parsedAttachments.length > 0) {
+      const attachmentsToInsert = parsedAttachments
         .map((attachment) => {
           try {
             const jsonContent =
@@ -81,7 +97,7 @@ export async function POST(req: NextRequest) {
         })
         .filter(
           (a): a is { pending_note_id: string; content: string } => a !== null
-        ); // usuwa null i typ jest bezpieczny
+        );
 
       if (attachmentsToInsert.length > 0) {
         const { error: attachError } = await supabase
