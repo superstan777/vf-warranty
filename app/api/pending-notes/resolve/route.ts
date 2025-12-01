@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
         claim_id: claim.id,
         content: pending.content,
         user_name: pending.user_name,
-        origin: pending.origin || "teams",
+        origin: "teams",
       })
       .select()
       .single();
