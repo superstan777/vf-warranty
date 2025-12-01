@@ -11,14 +11,19 @@ export async function getBotAccessToken(): Promise<string> {
 
   if (error || !data) throw new Error("No bot token found");
 
-  const expiresAt =
-    new Date(data.updated_at).getTime() + data.expires_in * 1000;
+  if (!data.updated_at || !data.expires_in) {
+    throw new Error("Bot token record missing updated_at or expires_in");
+  }
+
+  const updatedAt = new Date(data.updated_at).getTime(); // teraz na pewno string
+  const expiresAt = updatedAt + data.expires_in * 1000;
+
   if (Date.now() >= expiresAt - 60_000) {
     // odświeżamy token 1 min przed wygaśnięciem
     return await refreshBotToken(data.refresh_token);
   }
 
-  return data.access_token;
+  return data.access_token!;
 }
 
 // Funkcja odświeżania tokena
