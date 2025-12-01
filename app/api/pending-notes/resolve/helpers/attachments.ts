@@ -11,19 +11,25 @@ export async function processAttachments(noteId: string, attachments: any[]) {
 
   for (const att of attachments) {
     try {
+      // Forwarded message
       if (att.contentType === "forwardedMessageReference") {
         console.log(
           `Forwarded message detected, saving content as is for note ${noteId}`
         );
-        const { error } = await supabase.from("attachments").insert({
-          note_id: noteId,
-          content: att.content,
-          content_url: null,
-          file_name: null,
-        });
+        const { error } = await supabase.from("attachments").insert([
+          {
+            note_id: noteId,
+            content: att.content || "",
+            content_url: "",
+            file_name: "",
+          },
+        ]);
+
         if (error)
           console.error("DB error inserting forwarded message:", error);
         else console.log("Forwarded message saved successfully");
+
+        // Plik / obrazek
       } else if (att.contentType === "reference" && att.contentUrl) {
         console.log(`Downloading file from ${att.contentUrl}`);
         const fileData = await fetch(att.contentUrl, {
@@ -48,18 +54,18 @@ export async function processAttachments(noteId: string, attachments: any[]) {
           console.log("File uploaded successfully");
         }
 
-        const { error: dbError } = await supabase.from("attachments").insert({
-          note_id: noteId,
-          content: null,
-          content_url: filePath,
-          file_name: fileName,
-        });
+        const { error: dbError } = await supabase.from("attachments").insert([
+          {
+            note_id: noteId,
+            content: "",
+            content_url: filePath,
+            file_name: fileName,
+          },
+        ]);
 
-        if (dbError) {
+        if (dbError)
           console.error("Failed to insert attachment record:", dbError);
-        } else {
-          console.log("Attachment record inserted into DB successfully");
-        }
+        else console.log("Attachment record inserted into DB successfully");
       } else {
         console.log("Skipping unknown attachment type:", att.contentType);
       }
