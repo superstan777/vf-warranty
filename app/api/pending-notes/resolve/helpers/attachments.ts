@@ -1,5 +1,3 @@
-// resolve/helpers/attachments.ts
-
 import { createClient } from "@/utils/supabase/client";
 import { getBotAccessToken } from "@/utils/botToken";
 import { downloadTeamsFile } from "./graph";
@@ -35,14 +33,16 @@ export async function processAttachments(noteId: string, attachments: any[]) {
       // ---------------------------
       // 2. Teams FILE attachment
       // ---------------------------
-      if (att.file_name) {
+      if (att.file_name && att.content_url) {
         const fileName = att.file_name;
-        console.log(`Downloading Teams file: ${fileName}`);
+        console.log(
+          `Downloading Teams file: ${fileName} from ${att.content_url}`
+        );
 
         let fileData: ArrayBuffer;
 
         try {
-          fileData = await downloadTeamsFile(botToken, fileName);
+          fileData = await downloadTeamsFile(botToken, att.content_url);
         } catch (err) {
           console.error("Graph download failed:", err, att);
           continue;

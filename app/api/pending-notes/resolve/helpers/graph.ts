@@ -1,57 +1,56 @@
-// resolve/helpers/graph.ts
-
-export async function getTeamsChatFolderId(botToken: string) {
-  const res = await fetch(
-    "https://graph.microsoft.com/v1.0/me/drive/root/children?$filter=name eq 'Microsoft Teams Chat Files'",
-    {
-      headers: { Authorization: `Bearer ${botToken}` },
-    }
-  );
-
-  if (!res.ok)
-    throw new Error(`Graph error: cannot list root children for Teams folder`);
-
-  const data = await res.json();
-  if (!data.value?.length) throw new Error("Teams Chat Files folder not found");
-
-  return data.value[0].id;
-}
+/**
+ * Pobiera plik z Microsoft Teams / SharePoint na podstawie pełnego URL
+ */
 
 export async function downloadTeamsFile(
   botToken: string,
-  fileName: string
+  fileUrl: string
 ): Promise<ArrayBuffer> {
-  const folderId = await getTeamsChatFolderId(botToken);
+  try {
+    const url = new URL(fileUrl);
 
-  const filesRes = await fetch(
-    `https://graph.microsoft.com/v1.0/me/drive/items/${folderId}/children`,
-    {
-      headers: { Authorization: `Bearer ${botToken}` },
+    // Host SharePoint, np. maxgore-my.sharepoint.com
+    const host = url.host;
+
+    // Ścieżka po /personal/... -> identyfikujemy usera i folder
+    const parts = url.pathname.split("/").filter(Boolean);
+
+    if (parts[0] !== "personal") {
+      throw new Error("URL is not a SharePoint personal site");
     }
-  );
 
-  if (!filesRes.ok)
-    throw new Error(`Cannot list files in Teams folder: ${filesRes.status}`);
+    const personalSite = `/personal/${parts[1]}`;
+    const filePath = parts.slice(2).join("/"); // Documents/.../plik.png
 
-  const files = await filesRes.json();
-
-  const file = files.value.find((f: any) => f.name === fileName);
-  if (!file) {
-    console.error("FILES IN FOLDER:", files.value); // debug
-    throw new Error(`File not found in Teams folder: ${fileName}`);
-  }
-
-  const contentRes = await fetch(
-    `https://graph.microsoft.com/v1.0/me/drive/items/${file.id}/content`,
-    {
-      headers: { Authorization: `Bearer ${botToken}` },
-    }
-  );
-
-  if (!contentRes.ok)
-    throw new Error(
-      `Cannot download file: ${contentRes.status} ${contentRes.statusText}`
+    // 1️⃣ Pobieramy ID site
+    const siteRes = await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${host}:${personalSite}`,
+      {
+        headers: { Authorization: `Bearer ${botToken}` },
+      }
     );
 
-  return await contentRes.arrayBuffer();
+    if (!siteRes.ok)
+      throw new Error(`Cannot resolve SharePoint site ID: ${siteRes.status}`);
+
+    const siteData = await siteRes.json();
+    const siteId = siteData.id;
+    if (!siteId) throw new Error("SharePoint site ID not found");
+
+    // 2️⃣ Pobieramy plik po ścieżce
+    const fileRes = await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:/${filePath}:/content`,
+      { headers: { Authorization: `Bearer ${botToken}` } }
+    );
+
+    if (!fileRes.ok)
+      throw new Error(
+        `Cannot download file content: ${fileRes.status} ${fileRes.statusText}`
+      );
+
+    return await fileRes.arrayBuffer();
+  } catch (err) {
+    console.error("Graph download failed:", err);
+    throw err;
+  }
 }
