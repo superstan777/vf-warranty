@@ -1,5 +1,7 @@
+// resolve/helpers/attachments.ts
 import { createClient } from "@/utils/supabase/client";
 import { getBotAccessToken } from "@/utils/botToken";
+import { downloadTeamsFile } from "./graph";
 
 export async function processAttachments(noteId: string, attachments: any[]) {
   const supabase = createClient();
@@ -11,11 +13,12 @@ export async function processAttachments(noteId: string, attachments: any[]) {
 
   for (const att of attachments) {
     try {
-      // Tekstowy forwarded message – content_url jest null
+      // ---------------------------
+      // 1. Forwardowane wiadomości
+      // ---------------------------
       if (!att.content_url && !att.id) {
-        console.log(
-          `Forwarded message detected, saving content as is for note ${noteId}`
-        );
+        console.log("Saving forwarded text message");
+
         const { error } = await supabase.from("attachments").insert([
           {
             note_id: noteId,
@@ -25,53 +28,39 @@ export async function processAttachments(noteId: string, attachments: any[]) {
           },
         ]);
 
-        if (error)
-          console.error("DB error inserting forwarded message:", error);
-        else console.log("Forwarded message saved successfully");
-
+        if (error) console.error("DB error:", error);
         continue;
       }
 
-      // Plik / obrazek – pobieramy przez Graph API
-      if (att.content_url) {
-        console.log(
-          `Downloading file from Graph API for attachment ${att.content_url}`
-        );
+      // ---------------------------
+      // 2. Załączniki z Teams
+      // ---------------------------
+      if (att.name) {
+        const fileName = att.name;
+        console.log(`Downloading Teams file: ${fileName}`);
 
-        const fileResponse = await fetch(
-          `https://graph.microsoft.com/v1.0/me/drive/items/${att.content_url}/content`,
-          {
-            headers: { Authorization: `Bearer ${botToken}` },
-          }
-        );
-
-        if (!fileResponse.ok) {
-          console.error(
-            `Failed to download file from Graph API: ${fileResponse.status} ${fileResponse.statusText}`
-          );
+        let fileData: ArrayBuffer;
+        try {
+          fileData = await downloadTeamsFile(botToken, fileName);
+        } catch (err) {
+          console.error("Graph download failed:", err);
           continue;
         }
 
-        const fileData = await fileResponse.arrayBuffer();
-        const fileName = att.file_name || `file_${Date.now()}`;
         const filePath = `attachments/note_${noteId}/${fileName}`;
-        console.log(`Uploading file to Supabase Storage at path: ${filePath}`);
+
+        console.log(`Uploading ${filePath} to Supabase...`);
 
         const { error: uploadError } = await supabase.storage
           .from("attachments")
           .upload(filePath, Buffer.from(fileData), { upsert: true });
 
         if (uploadError) {
-          console.error(
-            "Failed to upload file to Supabase Storage:",
-            uploadError
-          );
+          console.error("Supabase upload failed:", uploadError);
           continue;
-        } else {
-          console.log("File uploaded successfully");
         }
 
-        const { error: dbError } = await supabase.from("attachments").insert([
+        await supabase.from("attachments").insert([
           {
             note_id: noteId,
             content: "",
@@ -80,12 +69,14 @@ export async function processAttachments(noteId: string, attachments: any[]) {
           },
         ]);
 
-        if (dbError)
-          console.error("Failed to insert attachment record:", dbError);
-        else console.log("Attachment record inserted into DB successfully");
-      } else {
-        console.log("Skipping unknown attachment type:", att);
+        console.log(`Attachment ${fileName} saved.`);
+        continue;
       }
+
+      // ---------------------------
+      // 3. Unknown attachment type
+      // ---------------------------
+      console.log("Skipping unknown attachment format:", att);
     } catch (err) {
       console.error("Failed to process attachment:", err);
     }
