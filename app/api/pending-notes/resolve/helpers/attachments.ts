@@ -1,4 +1,5 @@
 // resolve/helpers/attachments.ts
+
 import { createClient } from "@/utils/supabase/client";
 import { getBotAccessToken } from "@/utils/botToken";
 import { downloadTeamsFile } from "./graph";
@@ -14,46 +15,47 @@ export async function processAttachments(noteId: string, attachments: any[]) {
   for (const att of attachments) {
     try {
       // ---------------------------
-      // 1. Forwardowane wiadomości
+      // 1. Forwarded TEXT message
       // ---------------------------
-      if (!att.content_url && !att.id) {
+      if (!att.file_name && att.content) {
         console.log("Saving forwarded text message");
 
-        const { error } = await supabase.from("attachments").insert([
+        await supabase.from("attachments").insert([
           {
             note_id: noteId,
-            content: att.content || "",
+            content: att.content,
             content_url: "",
             file_name: "",
           },
         ]);
 
-        if (error) console.error("DB error:", error);
         continue;
       }
 
       // ---------------------------
-      // 2. Załączniki z Teams
+      // 2. Teams FILE attachment
       // ---------------------------
-      if (att.name) {
-        const fileName = att.name;
+      if (att.file_name) {
+        const fileName = att.file_name;
         console.log(`Downloading Teams file: ${fileName}`);
 
         let fileData: ArrayBuffer;
+
         try {
           fileData = await downloadTeamsFile(botToken, fileName);
         } catch (err) {
-          console.error("Graph download failed:", err);
+          console.error("Graph download failed:", err, att);
           continue;
         }
 
         const filePath = `attachments/note_${noteId}/${fileName}`;
 
-        console.log(`Uploading ${filePath} to Supabase...`);
-
         const { error: uploadError } = await supabase.storage
           .from("attachments")
-          .upload(filePath, Buffer.from(fileData), { upsert: true });
+          .upload(filePath, Buffer.from(fileData), {
+            upsert: true,
+            contentType: "application/octet-stream",
+          });
 
         if (uploadError) {
           console.error("Supabase upload failed:", uploadError);
@@ -74,11 +76,11 @@ export async function processAttachments(noteId: string, attachments: any[]) {
       }
 
       // ---------------------------
-      // 3. Unknown attachment type
+      // 3. Unknown format
       // ---------------------------
-      console.log("Skipping unknown attachment format:", att);
+      console.log("Skipping unknown attachment:", att);
     } catch (err) {
-      console.error("Failed to process attachment:", err);
+      console.error("Failed to process attachment:", err, att);
     }
   }
 
