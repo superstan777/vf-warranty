@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { signIn } from "next-auth/react";
+import Image from "next/image";
 
 export function SignInWithMicrosoftButton() {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,10 +25,11 @@ export function SignInWithMicrosoftButton() {
       onClick={handleSignIn}
       disabled={isLoading}
     >
-      <img
+      <Image
         src="https://learn.microsoft.com/en-us/entra/identity-platform/media/howto-add-branding-in-apps/ms-symbollockup_mssymbol_19.svg"
         alt="Microsoft Logo"
-        className="w-5 h-5"
+        width={20}
+        height={20}
       />
 
       {isLoading ? (

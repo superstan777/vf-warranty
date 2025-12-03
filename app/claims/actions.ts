@@ -1,27 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/utils/supabase/client";
 import { auth } from "@/auth";
+import { insertClaim } from "@/utils/queries/claims";
 
 export async function createClaim(title: string, description: string) {
   const session = await auth();
-  const supabase = createClient();
 
   if (!session?.user?.name) {
     throw new Error("User name is missing");
   }
 
-  const { data, error } = await supabase
-    .from("claims")
-    .insert({
-      title,
-      description,
-      created_by: session.user.name,
-    })
-    .select();
+  const { data, error } = await insertClaim({
+    title,
+    description,
+    created_by: session.user.name,
+  });
 
-  if (error) {
+  if (error || !data || data.length === 0) {
     console.error("Failed to create claim:", error);
     throw new Error("Failed to create claim");
   }

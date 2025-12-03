@@ -2,10 +2,11 @@ import { createClient } from "@/utils/supabase/client";
 import type { Tables } from "@/types/supabase";
 
 type Attachment = Tables<"attachments">;
+type Note = Tables<"notes">;
+
+const supabase = createClient();
 
 export async function getNotesWithAttachmentsByClaimId(claimId: string) {
-  const supabase = createClient();
-
   // 1. Pobieramy notatki
   const { data: notes, error: notesError } = await supabase
     .from("notes")
@@ -45,3 +46,17 @@ export async function getNotesWithAttachmentsByClaimId(claimId: string) {
 
   return { notes, attachments: groupedAttachments, error: null };
 }
+
+export const insertNote = async ({
+  claim_id,
+  content,
+  user_name,
+  origin,
+}: Pick<Note, "claim_id" | "content" | "user_name" | "origin">) => {
+  const { data, error } = await supabase
+    .from("notes")
+    .insert({ claim_id, content, user_name, origin })
+    .select();
+
+  return { data, error };
+};

@@ -1,63 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/client";
 import { htmlToText } from "html-to-text";
+import { normalizeIncNumber } from "@/utils/inc";
+import { getClaimByIncNumber } from "@/utils/queries/claims";
+import { insertNote } from "@/utils/queries/notes";
+import { checkRequestAuth } from "@/utils/backendAuth";
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader || authHeader !== `Bearer ${process.env.BOT_API_TOKEN}`) {
-    return NextResponse.json(
-      { success: false, reason: "UNAUTHORIZED" },
-      { status: 200 }
-    );
-  }
+  const authError = checkRequestAuth(req);
+  if (authError) return authError;
 
   try {
-    const body = await req.json();
-    const { content, user_name, origin, inc_number } = body;
+    const { content, user_name, origin, inc_number } = await req.json();
 
     if (!content || !inc_number) {
       return NextResponse.json(
         {
           success: false,
           reason: "MISSING_FIELDS",
-          details: "content and inc_number are required",
+          details: "Message and incident number are required",
         },
         { status: 200 }
       );
     }
 
-    const supabase = createClient();
+    const normalizedInc = normalizeIncNumber(inc_number);
 
-    const { data: claim, error: claimError } = await supabase
-      .from("claims")
-      .select("id")
-      .eq("inc_number", inc_number)
-      .limit(1)
-      .single();
+    const { data: claim, error: claimError } = await getClaimByIncNumber(
+      normalizedInc
+    );
 
     if (claimError || !claim) {
       return NextResponse.json(
         {
           success: false,
           reason: "INCIDENT_NOT_FOUND",
-          details: `Incident ${inc_number} does not exist`,
+          details: `Incident ${normalizedInc} does not exist`,
+        },
+        { status: 200 }
+      );
+    }
+
+    if (claim.status !== "in_progress") {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "INCIDENT_NOT_IN_PROGRESS",
+          details: `Incident ${normalizedInc} is resolved or cancelled`,
         },
         { status: 200 }
       );
     }
 
     const cleanText = htmlToText(content, { wordwrap: false });
-    const { data: noteData, error: noteError } = await supabase
-      .from("notes")
-      .insert({
-        claim_id: claim.id,
-        content: cleanText,
-        user_name,
-        origin,
-      })
-      .select();
 
-    if (noteError) {
+    const { data: noteData, error: noteError } = await insertNote({
+      claim_id: claim.id,
+      content: cleanText,
+      user_name,
+      origin,
+    });
+
+    if (noteError || !noteData?.length) {
       console.error("Supabase insert error:", noteError);
       return NextResponse.json(
         {
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Unhandled error:", err);
     return NextResponse.json(
       {

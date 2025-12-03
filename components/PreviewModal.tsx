@@ -2,7 +2,7 @@
 
 import { Download, X, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Attachment } from "./AttachmentsGrid";
 
 interface Props {
@@ -17,10 +17,13 @@ export default function PreviewModal({
   onClose,
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
 
-  useEffect(() => setCurrentIndex(initialIndex), [initialIndex]);
-  useEffect(() => setVisible(true), []);
+  const currentAttachment = attachments[currentIndex];
+  const filename = currentAttachment.path.split("/").pop();
+  const ext = currentAttachment.path.split(".").pop()?.toLowerCase();
+  const isImage =
+    ext && ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext);
 
   const next = useCallback(() => {
     setCurrentIndex((i) => (i + 1) % attachments.length);
@@ -30,34 +33,31 @@ export default function PreviewModal({
     setCurrentIndex((i) => (i - 1 + attachments.length) % attachments.length);
   }, [attachments.length]);
 
-  const closeWithFade = () => {
+  const closeWithFade = useCallback(() => {
     setVisible(false);
-    setTimeout(() => onClose(), 200);
-  };
+    setTimeout(onClose, 200);
+  }, [onClose]);
 
-  const currentAttachment = attachments[currentIndex];
-  const filename = currentAttachment.path.split("/").pop();
-  const ext = currentAttachment.path.split(".").pop()?.toLowerCase();
-  const isImage =
-    ext && ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext);
-
-  const handleDownload = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      const response = await fetch(currentAttachment.url);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename || "file";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error("Download failed", err);
-    }
-  };
+  const handleDownload = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        const response = await fetch(currentAttachment.url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename || "file";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.error("Download failed", err);
+      }
+    },
+    [currentAttachment.url, filename]
+  );
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -65,7 +65,7 @@ export default function PreviewModal({
       else if (e.key === "ArrowLeft") prev();
       else if (e.key === "Escape") closeWithFade();
     },
-    [next, prev]
+    [next, prev, closeWithFade]
   );
 
   useEffect(() => {
@@ -114,7 +114,8 @@ export default function PreviewModal({
               alt={filename || ""}
               width={800}
               height={600}
-              className="object-contain max-h-[80vh] pointer-events-none"
+              className="object-contain pointer-events-none"
+              style={{ width: "auto", height: "auto" }}
             />
           ) : (
             <div className="w-full flex items-center justify-center text-gray-300 p-4 pointer-events-none">

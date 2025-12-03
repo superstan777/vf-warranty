@@ -41,7 +41,8 @@ export default function AttachmentsGrid({ attachments }: Props) {
                     alt={filename || ""}
                     width={80}
                     height={80}
-                    className="object-cover w-full h-full"
+                    className="object-cover"
+                    style={{ width: "100%", height: "auto" }}
                   />
                 ) : (
                   <span className="text-xs text-gray-600 dark:text-gray-300">

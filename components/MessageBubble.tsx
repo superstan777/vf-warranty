@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDateToLocal24h } from "@/lib/utils";
+import { formatDateToLocal24h } from "@/utils/utils";
 import type { Tables } from "@/types/supabase";
 import AttachmentsGrid from "./AttachmentsGrid";
 

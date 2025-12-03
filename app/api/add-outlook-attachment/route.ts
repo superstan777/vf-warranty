@@ -1,21 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/client";
+import { insertAttachment, uploadToStorage } from "@/utils/queries/attachments";
+import { checkRequestAuth } from "@/utils/backendAuth";
 
 export async function POST(req: NextRequest) {
-  // --- AUTH CHECK ---
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader || authHeader !== `Bearer ${process.env.BOT_API_TOKEN}`) {
-    return NextResponse.json(
-      { success: false, reason: "UNAUTHORIZED" },
-      { status: 200 }
-    );
-  }
+  const authError = checkRequestAuth(req);
+  if (authError) return authError;
 
   try {
-    // --- PARSE BODY ---
-    const body = await req.json();
     const { claim_id, note_id, file_name, content_type, content_base_64 } =
-      body;
+      await req.json();
 
     if (!note_id || !file_name || !content_type || !content_base_64) {
       return NextResponse.json(
@@ -29,8 +22,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createClient();
-
     // --- DECODE FILE ---
     let fileBuffer: Buffer;
     try {
@@ -38,7 +29,7 @@ export async function POST(req: NextRequest) {
         "utf-8"
       );
       fileBuffer = Buffer.from(utf8String, "base64");
-    } catch (err) {
+    } catch {
       return NextResponse.json(
         {
           success: false,
@@ -49,17 +40,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // --- STORAGE PATH: {note_id}/{file_name} ---
     const storagePath = `${claim_id}/${note_id}/${file_name}`;
 
-    // --- UPLOAD TO SUPABASE STORAGE ---
-    const { error: uploadError } = await supabase.storage
-      .from("attachments")
-      .upload(storagePath, fileBuffer, {
-        contentType: content_type,
-        upsert: true,
-      });
-
+    // --- UPLOAD TO STORAGE ---
+    const { error: uploadError } = await uploadToStorage(
+      storagePath,
+      fileBuffer,
+      content_type
+    );
     if (uploadError) {
       console.error("Supabase upload error:", uploadError);
       return NextResponse.json(
@@ -72,12 +60,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // --- SAVE MINIMAL METADATA TO DB ---
-    const { error: insertError } = await supabase.from("attachments").insert({
+    // --- SAVE METADATA ---
+    const { error: insertError } = await insertAttachment({
       note_id,
       path: storagePath,
     });
-
     if (insertError) {
       console.error("Supabase insert error:", insertError);
       return NextResponse.json(

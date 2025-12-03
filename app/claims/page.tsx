@@ -1,6 +1,6 @@
 import Link from "next/link";
 import ClaimCard from "@/components/ClaimCard";
-import { getClaims } from "@/lib/queries/claims";
+import { getClaims } from "@/utils/queries/claims";
 
 export default async function ClaimsPage() {
   const { data: claims, error } = await getClaims();
@@ -12,7 +12,6 @@ export default async function ClaimsPage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      {/* Nagłówek */}
       <div className="mb-8">
         <h1 className="text-3xl font-semibold mb-2">Warranty Claims</h1>
         <p className="text-gray-600 dark:text-zinc-400">
@@ -20,7 +19,6 @@ export default async function ClaimsPage() {
         </p>
       </div>
 
-      {/* Lista / Empty state */}
       <div className="flex flex-col gap-4">
         {!claims || claims.length === 0 ? (
           <div className="text-gray-500 text-sm p-6 border rounded-lg text-center">
