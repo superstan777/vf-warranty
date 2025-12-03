@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
   try {
     // --- PARSE BODY ---
     const body = await req.json();
-    const { note_id, file_name, content_type, content_base_64 } = body;
+    const { claim_id, note_id, file_name, content_type, content_base_64 } =
+      body;
 
     console.log(content_base_64);
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     }
 
     // --- STORAGE PATH: {note_id}/{file_name} ---
-    const storagePath = `${note_id}/${file_name}`;
+    const storagePath = `${claim_id}/${note_id}/${file_name}`;
 
     // --- UPLOAD TO SUPABASE STORAGE ---
     const { error: uploadError } = await supabase.storage
