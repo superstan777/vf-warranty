@@ -35,7 +35,10 @@ export async function POST(req: NextRequest) {
     // --- DECODE FILE ---
     let fileBuffer: Buffer;
     try {
-      fileBuffer = Buffer.from(content_base_64, "base64");
+      const utf8String = Buffer.from(content_base_64, "base64").toString(
+        "utf-8"
+      );
+      fileBuffer = Buffer.from(utf8String, "base64");
     } catch (err) {
       return NextResponse.json(
         {
