@@ -68,42 +68,6 @@ export type Database = {
           },
         ]
       }
-      bot_tokens: {
-        Row: {
-          access_token: string | null
-          created_at: string | null
-          expires_in: number
-          id: string
-          refresh_token: string
-          scope: string
-          token_type: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          access_token?: string | null
-          created_at?: string | null
-          expires_in: number
-          id?: string
-          refresh_token: string
-          scope: string
-          token_type: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          access_token?: string | null
-          created_at?: string | null
-          expires_in?: number
-          id?: string
-          refresh_token?: string
-          scope?: string
-          token_type?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       claims: {
         Row: {
           created_at: string
