@@ -1,31 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 
 export async function POST(req: NextRequest) {
+  // --- AUTH CHECK ---
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader || authHeader !== `Bearer ${process.env.BOT_API_TOKEN}`) {
+    return NextResponse.json(
+      { success: false, reason: "UNAUTHORIZED" },
+      { status: 200 }
+    );
+  }
+
   try {
-    const { note_id, file_name, content_type, content_base_64 } =
-      await req.json();
+    // --- PARSE BODY ---
+    const body = await req.json();
+    const { note_id, file_name, content_type, content_base_64 } = body;
 
     if (!note_id || !file_name || !content_type || !content_base_64) {
       return NextResponse.json(
-        { error: "Missing parameters" },
-        { status: 400 }
+        {
+          success: false,
+          reason: "MISSING_FIELDS",
+          details:
+            "note_id, file_name, content_type and content_base_64 are required",
+        },
+        { status: 200 }
       );
     }
 
-    // Init Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY! // requires service role to upload server-side
-    );
+    const supabase = createClient();
 
-    // Decode Base64 → Buffer
-    const fileBuffer = Buffer.from(content_base_64, "base64");
+    // --- DECODE FILE ---
+    let fileBuffer: Buffer;
+    try {
+      fileBuffer = Buffer.from(content_base_64, "base64");
+    } catch (err) {
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "INVALID_BASE64",
+          details: "content_base_64 is not valid base64",
+        },
+        { status: 200 }
+      );
+    }
 
-    // Unified storage path (no mail / teams distinctions)
+    // --- STORAGE PATH: {note_id}/{file_name} ---
     const storagePath = `${note_id}/${file_name}`;
 
-    // Upload file
+    // --- UPLOAD TO SUPABASE STORAGE ---
     const { error: uploadError } = await supabase.storage
       .from("attachments")
       .upload(storagePath, fileBuffer, {
@@ -34,29 +57,54 @@ export async function POST(req: NextRequest) {
       });
 
     if (uploadError) {
-      console.error(uploadError);
-      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+      console.error("Supabase upload error:", uploadError);
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "UPLOAD_FAILED",
+          details: "Could not upload file to storage",
+        },
+        { status: 200 }
+      );
     }
 
-    // Optional DB metadata entry
-    await supabase.from("attachments").insert([
-      {
-        note_id,
-        file_name,
-        path: storagePath,
-        content_type,
-      },
-    ]);
+    // --- OPTIONAL: SAVE METADATA TO DB TABLE ---
+    const { error: insertError } = await supabase.from("attachments").insert({
+      note_id,
+      file_name,
+      path: storagePath,
+      content_type,
+    });
+
+    if (insertError) {
+      console.error("Supabase insert error:", insertError);
+      return NextResponse.json(
+        {
+          success: false,
+          reason: "METADATA_INSERT_FAILED",
+          details: "File uploaded but metadata could not be saved",
+        },
+        { status: 200 }
+      );
+    }
 
     return NextResponse.json(
-      { success: true, path: storagePath },
+      {
+        success: true,
+        path: storagePath,
+        details: "Attachment successfully uploaded",
+      },
       { status: 200 }
     );
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error("Unhandled error:", err);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        success: false,
+        reason: "UNHANDLED_EXCEPTION",
+        details: "Request failed internally",
+      },
+      { status: 200 }
     );
   }
 }
