@@ -103,17 +103,17 @@ export default function PreviewModal({
           </button>
         </div>
 
-        <div className="flex-1 flex items-center justify-center h-screen pointer-events-auto px-4">
+        <div className="flex-1 flex items-center justify-center pointer-events-auto px-4 pt-10 overflow-auto">
           {isImage ? (
             <Image
               src={currentAttachment.url}
               alt={filename || ""}
               width={800}
               height={600}
-              className="object-contain max-h-screen max-w-full"
+              className="object-none"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 p-4">
+            <div className="w-full flex items-center justify-center text-gray-300 p-4">
               <span className="text-center">{filename}</span>
             </div>
           )}
