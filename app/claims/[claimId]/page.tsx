@@ -2,7 +2,7 @@ import { NoteForm } from "@/components/NoteForm";
 import MessageBubble from "../../../components/MessageBubble";
 import StatusTag from "@/components/StatusTag";
 import { getClaimById } from "@/lib/queries/claims";
-import { getNotesByClaimId } from "@/lib/queries/notes";
+import { getNotesWithAttachmentsByClaimId } from "@/lib/queries/notes";
 import SystemMessageBubble from "@/components/SystemMessageBubble";
 
 interface ClaimPageProps {
@@ -19,10 +19,16 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     return <p>Failed to load claim.</p>;
   }
 
-  const { data: notes, error: notesError } = await getNotesByClaimId(claimId);
+  // Używamy nowej funkcji, która zwraca notes + attachments
+  const {
+    notes,
+    attachments,
+    error: notesError,
+  } = await getNotesWithAttachmentsByClaimId(claimId);
   if (notesError) {
     console.error("Error fetching notes:", notesError);
   }
+  console.log(notes);
 
   return (
     <div className="p-8 max-w-3xl mx-auto flex flex-col gap-8">
@@ -47,6 +53,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
             <MessageBubble
               key={note.id}
               note={note}
+              attachments={attachments?.[note.id] ?? []} // przekazujemy attachmenty dla tej notatki
               isRight={index % 2 === 0}
             />
           ))

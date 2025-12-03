@@ -4,8 +4,17 @@ import type { Tables } from "@/types/supabase";
 
 type Note = Tables<"notes">;
 
+interface AttachmentWithUrl {
+  id: string;
+  note_id: string;
+  path: string;
+  created_at: string;
+  url: string; // publiczny URL do pliku
+}
+
 interface MessageBubbleProps {
   note: Note;
+  attachments?: AttachmentWithUrl[];
   isRight: boolean;
   children?: React.ReactNode;
 }
@@ -24,6 +33,7 @@ const originLabels: Record<string, string> = {
 
 export default function MessageBubble({
   note,
+  attachments,
   isRight,
   children,
 }: MessageBubbleProps) {
@@ -34,7 +44,7 @@ export default function MessageBubble({
     <div className={`flex ${isRight ? "justify-end" : "justify-start"}`}>
       <div className="max-w-lg rounded-lg bg-white shadow dark:bg-zinc-800 dark:text-zinc-50 overflow-hidden">
         <div className={`${topBarColor} w-full px-2 py-1`}>
-          <span className="text-xs  text-white tracking-wide">
+          <span className="text-xs text-white tracking-wide">
             {topBarLabel}
           </span>
         </div>
@@ -49,6 +59,22 @@ export default function MessageBubble({
           <div className="prose dark:prose-invert max-w-none">
             {note.content}
           </div>
+
+          {attachments && attachments.length > 0 && (
+            <div className="mt-2 flex flex-col gap-2">
+              {attachments.map((att) => (
+                <a
+                  key={att.id}
+                  href={att.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline text-sm"
+                >
+                  {att.path.split("/").pop()}
+                </a>
+              ))}
+            </div>
+          )}
 
           {children && (
             <div className="mt-2 flex flex-col gap-2">{children}</div>
