@@ -6,7 +6,7 @@ interface HomeButtonProps {
 
 export const HomeButton = ({ withText = false }: HomeButtonProps) => {
   return (
-    <Link href="/">
+    <Link href="/" aria-label="Go to homepage">
       <div className="flex items-center gap-2 cursor-pointer">
         <svg
           xmlns="http://www.w3.org/2000/svg"
