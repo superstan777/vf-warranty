@@ -16,6 +16,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { note_id, file_name, content_type, content_base_64 } = body;
 
+    console.log(content_base_64);
+
     if (!note_id || !file_name || !content_type || !content_base_64) {
       return NextResponse.json(
         {
