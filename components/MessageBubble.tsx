@@ -1,6 +1,8 @@
 "use client";
+
 import { formatDateToLocal24h } from "@/lib/utils";
 import type { Tables } from "@/types/supabase";
+import AttachmentsGrid from "./AttachmentsGrid";
 
 type Note = Tables<"notes">;
 
@@ -9,14 +11,19 @@ interface AttachmentWithUrl {
   note_id: string;
   path: string;
   created_at: string;
-  url: string; // publiczny URL do pliku
+  url: string;
 }
 
 interface MessageBubbleProps {
   note: Note;
   attachments?: AttachmentWithUrl[];
   isRight: boolean;
-  children?: React.ReactNode;
+}
+
+function getAttachmentType(path: string): "image" | "other" {
+  const imageExtensions = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
+  const ext = path.split(".").pop()?.toLowerCase();
+  return ext && imageExtensions.includes(ext) ? "image" : "other";
 }
 
 const originColors: Record<string, string> = {
@@ -35,14 +42,19 @@ export default function MessageBubble({
   note,
   attachments,
   isRight,
-  children,
 }: MessageBubbleProps) {
+  const processedAttachments =
+    attachments?.map((att) => ({
+      ...att,
+      type: getAttachmentType(att.path),
+    })) || [];
+
   const topBarColor = originColors[note.origin];
   const topBarLabel = originLabels[note.origin];
 
   return (
     <div className={`flex ${isRight ? "justify-end" : "justify-start"}`}>
-      <div className="max-w-lg rounded-lg bg-white shadow dark:bg-zinc-800 dark:text-zinc-50 overflow-hidden">
+      <div className="min-w-[75%] max-w-[90%] rounded-lg bg-white shadow dark:bg-zinc-800 dark:text-zinc-50 overflow-hidden">
         <div className={`${topBarColor} w-full px-2 py-1`}>
           <span className="text-xs text-white tracking-wide">
             {topBarLabel}
@@ -56,28 +68,12 @@ export default function MessageBubble({
             </span>
           )}
 
-          <div className="prose dark:prose-invert max-w-none">
+          <div className="prose dark:prose-invert max-w-none mb-2">
             {note.content}
           </div>
 
-          {attachments && attachments.length > 0 && (
-            <div className="mt-2 flex flex-col gap-2">
-              {attachments.map((att) => (
-                <a
-                  key={att.id}
-                  href={att.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-sm"
-                >
-                  {att.path.split("/").pop()}
-                </a>
-              ))}
-            </div>
-          )}
-
-          {children && (
-            <div className="mt-2 flex flex-col gap-2">{children}</div>
+          {processedAttachments.length > 0 && (
+            <AttachmentsGrid attachments={processedAttachments} />
           )}
 
           <span className="mt-2 block text-xs text-gray-400 dark:text-zinc-400">
