@@ -68,12 +68,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // --- OPTIONAL: SAVE METADATA TO DB TABLE ---
+    // --- SAVE MINIMAL METADATA TO DB ---
     const { error: insertError } = await supabase.from("attachments").insert({
       note_id,
-      file_name,
       path: storagePath,
-      content_type,
     });
 
     if (insertError) {

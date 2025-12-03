@@ -41,22 +41,22 @@ export type Database = {
     Tables: {
       attachments: {
         Row: {
-          content: string
           created_at: string
           id: string
           note_id: string
+          path: string
         }
         Insert: {
-          content: string
           created_at?: string
           id?: string
           note_id: string
+          path: string
         }
         Update: {
-          content?: string
           created_at?: string
           id?: string
           note_id?: string
+          path?: string
         }
         Relationships: [
           {
