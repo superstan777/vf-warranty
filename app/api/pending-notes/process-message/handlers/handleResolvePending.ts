@@ -19,28 +19,37 @@ export async function handleResolvePending(user_name: string, content: string) {
   if (claimErr) {
     console.error("Claim lookup error:", claimErr);
     return NextResponse.json(
-      { message: "Server error while fetching the incident." },
+      { message: "Server error while fetching the incident. Try again later." },
       { status: 500 }
     );
   }
 
   if (!claim) {
     return NextResponse.json(
-      { message: "Incident number does not exist." },
+      {
+        message:
+          "Incident number does not exist. Provide correct incident number or type 'cancel' to abort action.",
+      },
       { status: 400 }
     );
   }
 
   if (claim.status === "cancelled") {
     return NextResponse.json(
-      { message: "This claim has been cancelled." },
+      {
+        message:
+          "This claim has been cancelled. Provide correct incident number or type 'cancel' to abort action.",
+      },
       { status: 400 }
     );
   }
 
   if (claim.status === "resolved") {
     return NextResponse.json(
-      { message: "This claim has already been resolved." },
+      {
+        message:
+          "This claim has already been resolved. Provide correct incident number or type 'cancel' to abort action.",
+      },
       { status: 400 }
     );
   }
@@ -55,17 +64,10 @@ export async function handleResolvePending(user_name: string, content: string) {
     );
   }
 
-  if (!pending) {
-    return NextResponse.json(
-      { message: "No pending note found." },
-      { status: 400 }
-    );
-  }
-
   const { data: noteData, error: noteErr } = await insertNote({
     claim_id: claim.id,
-    user_name: pending.user_name,
-    content: pending.content,
+    user_name: pending!.user_name,
+    content: pending!.content,
     origin: "teams",
   });
 

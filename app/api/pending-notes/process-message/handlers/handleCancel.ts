@@ -25,7 +25,7 @@ export async function handleCancel(user_name: string) {
   await deletePendingNoteByUser(user_name);
 
   return NextResponse.json(
-    { message: "Pending note cancelled." },
+    { message: "Pending note cancelled. Send message to start new process." },
     { status: 200 }
   );
 }

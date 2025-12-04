@@ -30,7 +30,7 @@ export async function getClaimByIncNumber(incNumber: string) {
     .select("id, status")
     .eq("inc_number", incNumber)
     .limit(1)
-    .single();
+    .maybeSingle();
 
   return { data, error };
 }
