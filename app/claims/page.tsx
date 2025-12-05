@@ -1,20 +1,14 @@
 import Link from "next/link";
 import ClaimCard from "@/components/ClaimCard";
 import { getClaims } from "@/utils/queries/claims";
+import { ErrorComponent } from "@/components/ErrorComponent";
 
 export default async function ClaimsPage() {
   const { data: claims, error } = await getClaims();
 
   if (error) {
-    console.error("Error fetching claims:", error);
-    return (
-      <div className="p-8 max-w-4xl mx-auto text-center">
-        <p className="text-gray-600">
-          Oops! We couldn't load the claims at the moment. Please refresh the
-          page or try again in a few minutes
-        </p>
-      </div>
-    );
+    console.error("Supabase connection error:", error);
+    return <ErrorComponent type="database" />;
   }
 
   return (

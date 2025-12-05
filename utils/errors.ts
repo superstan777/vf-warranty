@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export function dbErrorResponse(logMessage: string, error: any) {
+export function dbErrorResponse(logMessage: string, error: unknown) {
   console.error(logMessage, error);
   return NextResponse.json(
     { message: "Database connection error. Please try again later." },

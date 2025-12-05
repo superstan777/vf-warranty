@@ -4,6 +4,7 @@ import StatusTag from "@/components/StatusTag";
 import { getClaimById } from "@/utils/queries/claims";
 import { getNotesWithAttachmentsByClaimId } from "@/utils/queries/notes";
 import SystemMessageBubble from "@/components/SystemMessageBubble";
+import { ErrorComponent } from "@/components/ErrorComponent";
 
 interface ClaimPageProps {
   params: Promise<{ claimId: string }>;
@@ -16,25 +17,11 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
 
   if (claimError) {
     console.error("Supabase connection error:", claimError);
-    return (
-      <div className="p-8 max-w-4xl mx-auto text-center">
-        <p className="text-gray-600">
-          Oops! We are having trouble connecting to the database. Please try
-          again in a few minutes.
-        </p>
-      </div>
-    );
+    return <ErrorComponent type="database" />;
   }
 
   if (!claim) {
-    return (
-      <div className="p-8 max-w-4xl mx-auto text-center">
-        <p className="text-gray-600">
-          The claim ID you provided does not exist. Please check the URL or
-          select a valid claim.
-        </p>
-      </div>
-    );
+    return <ErrorComponent type="claim" />;
   }
 
   const {

@@ -8,7 +8,7 @@ export const TopBar = () => {
   const pathname = usePathname();
 
   return (
-    <div className="w-full h-16 flex items-center justify-between px-4 bg-white">
+    <div className="w-full min-h-16 h-16 flex items-center justify-between px-4 bg-white">
       <HomeButton />
       {pathname === "/claims" && <CreateClaimDialog />}
     </div>
