@@ -7,7 +7,14 @@ export default async function ClaimsPage() {
 
   if (error) {
     console.error("Error fetching claims:", error);
-    return <p>Failed to load claims</p>;
+    return (
+      <div className="p-8 max-w-4xl mx-auto text-center">
+        <p className="text-gray-600">
+          Oops! We couldn't load the claims at the moment. Please refresh the
+          page or try again in a few minutes
+        </p>
+      </div>
+    );
   }
 
   return (
