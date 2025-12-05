@@ -14,7 +14,8 @@ export async function handleNewPending(user_name: string, content: string) {
 
   return NextResponse.json(
     {
-      message: "Note saved as pending. Provide the incident number to confirm.",
+      message:
+        "Note saved as pending. Provide the incident number to confirm or type 'cancel' to abort action.",
     },
     { status: 201 }
   );

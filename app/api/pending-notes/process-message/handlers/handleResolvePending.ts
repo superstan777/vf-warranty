@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { htmlToText } from "html-to-text";
-
 import { normalizeIncNumber } from "@/utils/inc";
-
 import { getClaimByIncNumber } from "@/utils/queries/claims";
 import {
   getPendingNote,
@@ -11,6 +9,9 @@ import {
 import { insertNote } from "@/utils/queries/notes";
 
 export async function handleResolvePending(user_name: string, content: string) {
+  const INC_HELP_TEXT =
+    "Provide correct incident number or type 'cancel' to abort action.";
+
   const rawInc = htmlToText(content, { wordwrap: false }).trim().toUpperCase();
   const inc = normalizeIncNumber(rawInc);
 
@@ -27,8 +28,7 @@ export async function handleResolvePending(user_name: string, content: string) {
   if (!claim) {
     return NextResponse.json(
       {
-        message:
-          "Incident number does not exist. Provide correct incident number or type 'cancel' to abort action.",
+        message: `Incident number does not exist. ${INC_HELP_TEXT}`,
       },
       { status: 400 }
     );
@@ -37,8 +37,7 @@ export async function handleResolvePending(user_name: string, content: string) {
   if (claim.status === "cancelled") {
     return NextResponse.json(
       {
-        message:
-          "This claim has been cancelled. Provide correct incident number or type 'cancel' to abort action.",
+        message: `This claim has been cancelled. ${INC_HELP_TEXT}`,
       },
       { status: 400 }
     );
@@ -47,8 +46,7 @@ export async function handleResolvePending(user_name: string, content: string) {
   if (claim.status === "resolved") {
     return NextResponse.json(
       {
-        message:
-          "This claim has already been resolved. Provide correct incident number or type 'cancel' to abort action.",
+        message: `This claim has already been resolved. ${INC_HELP_TEXT}`,
       },
       { status: 400 }
     );
