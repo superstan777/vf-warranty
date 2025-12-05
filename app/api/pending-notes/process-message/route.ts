@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRequestAuth } from "@/utils/backendAuth";
-
 import { handleNewPending } from "./handlers/handleNewPending";
 import { handleResolvePending } from "./handlers/handleResolvePending";
 import { handleCancel } from "./handlers/handleCancel";
-
 import { isPendingNote } from "@/utils/queries/pendingNotes";
+import { dbErrorResponse } from "@/utils/errors";
 
 export async function POST(req: NextRequest) {
   const authError = checkRequestAuth(req);
@@ -29,11 +28,7 @@ export async function POST(req: NextRequest) {
 
     const { exists, error } = await isPendingNote(user_name);
     if (error) {
-      console.error("Check pending error:", error);
-      return NextResponse.json(
-        { message: "Error while checking pending note." },
-        { status: 500 }
-      );
+      return dbErrorResponse("Supabase error (isPendingNote):", error);
     }
 
     if (exists) {
@@ -42,7 +37,10 @@ export async function POST(req: NextRequest) {
 
     return handleNewPending(user_name, content);
   } catch (err) {
-    console.error("Unhandled:", err);
-    return NextResponse.json({ message: "Unexpected error." }, { status: 500 });
+    console.error("Unhandled error in POST /api:", err);
+    return NextResponse.json(
+      { message: "Unexpected error. Please try again later." },
+      { status: 500 }
+    );
   }
 }

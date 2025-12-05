@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { insertPendingNote } from "@/utils/queries/pendingNotes";
+import { dbErrorResponse } from "@/utils/errors";
 
 export async function handleNewPending(user_name: string, content: string) {
   const { data, error } = await insertPendingNote({ user_name, content });
 
   if (error || !data || data.length === 0) {
-    console.error("Insert pending failed:", error);
-    return NextResponse.json(
-      { message: "Could not create pending note." },
-      { status: 500 }
-    );
+    return dbErrorResponse("Supabase error (insertPendingNote):", error);
   }
 
   return NextResponse.json(

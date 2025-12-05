@@ -7,6 +7,7 @@ import {
   deletePendingNoteByUser,
 } from "@/utils/queries/pendingNotes";
 import { insertNote } from "@/utils/queries/notes";
+import { dbErrorResponse } from "@/utils/errors";
 
 export async function handleResolvePending(user_name: string, content: string) {
   const INC_HELP_TEXT =
@@ -18,36 +19,26 @@ export async function handleResolvePending(user_name: string, content: string) {
   const { data: claim, error: claimErr } = await getClaimByIncNumber(inc);
 
   if (claimErr) {
-    console.error("Claim lookup error:", claimErr);
-    return NextResponse.json(
-      { message: "Server error while fetching the incident. Try again later." },
-      { status: 500 }
-    );
+    return dbErrorResponse("Supabase error (getClaimByIncNumber):", claimErr);
   }
 
   if (!claim) {
     return NextResponse.json(
-      {
-        message: `Incident number does not exist. ${INC_HELP_TEXT}`,
-      },
+      { message: `Incident number does not exist. ${INC_HELP_TEXT}` },
       { status: 400 }
     );
   }
 
   if (claim.status === "cancelled") {
     return NextResponse.json(
-      {
-        message: `This claim has been cancelled. ${INC_HELP_TEXT}`,
-      },
+      { message: `This claim has been cancelled. ${INC_HELP_TEXT}` },
       { status: 400 }
     );
   }
 
   if (claim.status === "resolved") {
     return NextResponse.json(
-      {
-        message: `This claim has already been resolved. ${INC_HELP_TEXT}`,
-      },
+      { message: `This claim has already been resolved. ${INC_HELP_TEXT}` },
       { status: 400 }
     );
   }
@@ -55,11 +46,7 @@ export async function handleResolvePending(user_name: string, content: string) {
   const { data: pending, error: pendingErr } = await getPendingNote(user_name);
 
   if (pendingErr) {
-    console.error("Pending note lookup error:", pendingErr);
-    return NextResponse.json(
-      { message: "Server error while fetching pending note." },
-      { status: 500 }
-    );
+    return dbErrorResponse("Supabase error (getPendingNote):", pendingErr);
   }
 
   const { data: noteData, error: noteErr } = await insertNote({
@@ -70,11 +57,7 @@ export async function handleResolvePending(user_name: string, content: string) {
   });
 
   if (noteErr || !noteData || noteData.length === 0) {
-    console.error("Insert note failed:", noteErr);
-    return NextResponse.json(
-      { message: "Could not save note." },
-      { status: 500 }
-    );
+    return dbErrorResponse("Supabase error (insertNote):", noteErr);
   }
 
   await deletePendingNoteByUser(user_name);
