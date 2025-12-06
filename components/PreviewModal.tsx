@@ -81,6 +81,7 @@ export default function PreviewModal({
         }`}
     >
       <div
+        data-testid="overlay-background"
         className="absolute inset-0 bg-black pointer-events-auto transition-opacity duration-200"
         style={{ opacity: visible ? 0.8 : 0 }}
         onClick={closeWithFade}
@@ -88,11 +89,15 @@ export default function PreviewModal({
 
       <div className="relative z-10 w-full max-w-5xl max-h-full flex flex-col pointer-events-none">
         <div className="fixed top-0 left-0 right-0 z-20 flex justify-center items-center p-2 pointer-events-auto">
-          <span className="text-sm font-semibold truncate text-gray-300">
+          <span
+            data-testid="filename"
+            className="text-sm font-semibold truncate text-gray-300"
+          >
             {filename}
           </span>
 
           <button
+            data-testid="download-button"
             onClick={handleDownload}
             className="absolute right-10 text-gray-300 p-1 hover:text-white cursor-pointer"
           >
@@ -127,6 +132,7 @@ export default function PreviewModal({
         </div>
 
         <button
+          data-testid="prev-button"
           onClick={prev}
           className="fixed left-2 top-1/2 -translate-y-1/2 p-2 bg-transparent text-gray-300 rounded-full
             hover:text-white z-20 pointer-events-auto cursor-pointer"
@@ -135,6 +141,7 @@ export default function PreviewModal({
         </button>
 
         <button
+          data-testid="next-button"
           onClick={next}
           className="fixed right-2 top-1/2 -translate-y-1/2 p-2 bg-transparent text-gray-300 rounded-full
             hover:text-white z-20 pointer-events-auto cursor-pointer"

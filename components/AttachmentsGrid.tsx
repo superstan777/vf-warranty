@@ -1,13 +1,12 @@
 "use client";
+
 import { Download } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import PreviewModal from "./PreviewModal";
+import type { AttachmentWithUrl } from "@/utils/queries/notes";
 
-export interface Attachment {
-  id: string;
-  url: string;
-  path: string;
+export interface Attachment extends AttachmentWithUrl {
   type: "image" | "other";
 }
 
@@ -24,8 +23,8 @@ export default function AttachmentsGrid({ attachments }: Props) {
     <>
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
         {attachments.map((att, i) => {
-          const filename = att.path.split("/").pop();
-          const ext = att.path.split(".").pop()?.toLowerCase();
+          const filename = att.path.split("/").pop() || "";
+          const ext = att.path.split(".").pop()?.toLowerCase() || "";
           const isImage = ext && IMAGE_EXT.includes(ext);
 
           return (
@@ -38,7 +37,7 @@ export default function AttachmentsGrid({ attachments }: Props) {
                 {isImage ? (
                   <Image
                     src={att.url}
-                    alt={filename || ""}
+                    alt={filename}
                     width={80}
                     height={80}
                     className="object-cover"

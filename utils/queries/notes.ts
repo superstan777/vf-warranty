@@ -3,6 +3,7 @@ import type { Tables } from "@/types/supabase";
 
 type Attachment = Tables<"attachments">;
 type Note = Tables<"notes">;
+export type AttachmentWithUrl = Attachment & { url: string };
 
 const supabase = createClient();
 
@@ -25,8 +26,6 @@ export async function getNotesWithAttachmentsByClaimId(claimId: string) {
 
   if (attachmentsError || !attachments)
     return { notes: null, error: attachmentsError };
-
-  type AttachmentWithUrl = Attachment & { url: string };
 
   const groupedAttachments = attachments.reduce((acc, att) => {
     if (!acc[att.note_id]) acc[att.note_id] = [];
