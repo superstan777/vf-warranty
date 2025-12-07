@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { htmlToText } from "html-to-text";
-import { normalizeIncNumber } from "@/utils/inc";
+import { normalizeIncNumber } from "@/utils/utils";
 import { getClaimByIncNumber } from "@/utils/queries/claims";
 import { insertNote } from "@/utils/queries/notes";
-import { checkRequestAuth } from "@/utils/backendAuth";
+import { checkRequestAuth } from "@/utils/backendUtils";
 
 export async function POST(req: NextRequest) {
   const authError = checkRequestAuth(req);

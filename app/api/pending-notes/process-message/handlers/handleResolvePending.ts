@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { htmlToText } from "html-to-text";
-import { normalizeIncNumber } from "@/utils/inc";
+import { normalizeIncNumber } from "@/utils/utils";
 import { getClaimByIncNumber } from "@/utils/queries/claims";
 import {
   getPendingNote,
   deletePendingNoteByUser,
 } from "@/utils/queries/pendingNotes";
 import { insertNote } from "@/utils/queries/notes";
-import { dbErrorResponse } from "@/utils/errors";
+import { dbErrorResponse } from "@/utils/backendUtils";
 
 export async function handleResolvePending(user_name: string, content: string) {
   const INC_HELP_TEXT =

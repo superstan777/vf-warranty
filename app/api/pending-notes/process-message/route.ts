@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkRequestAuth } from "@/utils/backendAuth";
+import { checkRequestAuth, dbErrorResponse } from "@/utils/backendUtils";
 import { handleNewPending } from "./handlers/handleNewPending";
 import { handleResolvePending } from "./handlers/handleResolvePending";
 import { handleCancel } from "./handlers/handleCancel";
 import { isPendingNote } from "@/utils/queries/pendingNotes";
-import { dbErrorResponse } from "@/utils/errors";
 
 export async function POST(req: NextRequest) {
   const authError = checkRequestAuth(req);

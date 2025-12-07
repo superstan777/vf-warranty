@@ -3,7 +3,7 @@ import {
   isPendingNote,
   deletePendingNoteByUser,
 } from "@/utils/queries/pendingNotes";
-import { dbErrorResponse } from "@/utils/errors";
+import { dbErrorResponse } from "@/utils/backendUtils";
 
 export async function handleCancel(user_name: string) {
   const { exists, error } = await isPendingNote(user_name);

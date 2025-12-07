@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { insertPendingNote } from "@/utils/queries/pendingNotes";
-import { dbErrorResponse } from "@/utils/errors";
+import { dbErrorResponse } from "@/utils/backendUtils";
 
 export async function handleNewPending(user_name: string, content: string) {
   const { data, error } = await insertPendingNote({ user_name, content });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { insertAttachment, uploadToStorage } from "@/utils/queries/attachments";
-import { checkRequestAuth } from "@/utils/backendAuth";
+import { checkRequestAuth } from "@/utils/backendUtils";
 
 export async function POST(req: NextRequest) {
   const authError = checkRequestAuth(req);

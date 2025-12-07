@@ -10,3 +10,11 @@ export function checkRequestAuth(req: NextRequest): NextResponse | null {
   }
   return null;
 }
+
+export function dbErrorResponse(logMessage: string, error: unknown) {
+  console.error(logMessage, error);
+  return NextResponse.json(
+    { message: "Database connection error. Please try again later." },
+    { status: 500 }
+  );
+}
