@@ -1,5 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { checkRequestAuth, dbErrorResponse } from "@/utils/backendUtils";
+import { NextRequest } from "next/server";
+import {
+  checkRequestAuth,
+  dbErrorResponse,
+  apiResponse,
+} from "@/utils/backendUtils";
 import { handleNewPending } from "./handlers/handleNewPending";
 import { handleResolvePending } from "./handlers/handleResolvePending";
 import { handleCancel } from "./handlers/handleCancel";
@@ -13,9 +17,12 @@ export async function POST(req: NextRequest) {
     const { user_name, content } = await req.json();
 
     if (!user_name || !content) {
-      return NextResponse.json(
-        { message: "Missing user name or content." },
-        { status: 400 }
+      return apiResponse(
+        "Missing user name or content.",
+        false,
+        undefined,
+        400,
+        "VALIDATION_ERROR"
       );
     }
 
@@ -26,6 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { exists, error } = await isPendingNote(user_name);
+
     if (error) {
       return dbErrorResponse("Supabase error (isPendingNote):", error);
     }
@@ -37,9 +45,13 @@ export async function POST(req: NextRequest) {
     return handleNewPending(user_name, content);
   } catch (err) {
     console.error("Unhandled error in POST /api:", err);
-    return NextResponse.json(
-      { message: "Unexpected error. Please try again later." },
-      { status: 500 }
+    return apiResponse(
+      "Unexpected error. Please try again later.",
+      false,
+      undefined,
+      500,
+      "UNHANDLED_EXCEPTION",
+      err
     );
   }
 }
