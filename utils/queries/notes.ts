@@ -51,10 +51,14 @@ export const insertNote = async ({
   content,
   user_name,
   origin,
-}: Pick<Note, "claim_id" | "content" | "user_name" | "origin">) => {
+  graph_id = null,
+}: Pick<
+  Note,
+  "claim_id" | "content" | "user_name" | "origin" | "graph_id"
+>) => {
   const { data, error } = await supabase
     .from("notes")
-    .insert({ claim_id, content, user_name, origin })
+    .insert({ claim_id, content, user_name, origin, graph_id })
     .select();
 
   return { data, error };

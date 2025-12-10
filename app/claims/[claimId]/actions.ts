@@ -23,6 +23,7 @@ export async function addNote(
     content,
     user_name: session.user.name,
     origin,
+    graph_id: null,
   });
 
   if (error || !data || data.length === 0) {
