@@ -22,12 +22,11 @@ export const uploadToStorage = async (
   fileBuffer: Buffer,
   contentType: string
 ) => {
-  const { error } = await supabase.storage
+  const { data, error } = await supabase.storage
     .from("attachments")
     .upload(storagePath, fileBuffer, {
       contentType,
       upsert: true,
     });
-
-  return { error };
+  return { data, error };
 };
