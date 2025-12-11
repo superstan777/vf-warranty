@@ -14,8 +14,14 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const { content, user_name, origin, inc_number, graph_id } =
-      await req.json();
+    const {
+      content,
+      user_name,
+      origin,
+      inc_number,
+      graph_id,
+      ready_for_display,
+    } = await req.json();
 
     if (!content || !inc_number) {
       return apiResponse(
@@ -68,6 +74,7 @@ export async function POST(req: NextRequest) {
       user_name,
       origin,
       graph_id,
+      ready_for_display: ready_for_display ?? false, // default false
     });
 
     if (noteError || !noteData?.length) {
