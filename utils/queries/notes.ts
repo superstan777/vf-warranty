@@ -43,16 +43,26 @@ export async function getNotesWithAttachmentsByClaimId(claimId: string) {
   return { notes, attachments: groupedAttachments, error: null };
 }
 
-export const insertNote = async ({
-  claim_id,
-  content,
-  user_name,
-  origin,
-  graph_id,
-}: InsertNote) => {
+export const insertNote = async (payload: InsertNote) => {
+  const {
+    claim_id,
+    content,
+    user_name,
+    origin,
+    graph_id = null,
+    ready_for_display = false, // domyślne
+  } = payload;
+
   const { data, error } = await supabase
     .from("notes")
-    .insert({ claim_id, content, user_name, origin, graph_id })
+    .insert({
+      claim_id,
+      content,
+      user_name,
+      origin,
+      graph_id,
+      ready_for_display,
+    })
     .select();
 
   return { data, error };

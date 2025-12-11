@@ -63,7 +63,7 @@ export async function handleResolvePending(user_name: string, content: string) {
       user_name: pending!.user_name,
       content: pending!.content,
       origin: "teams",
-      graph_id: null,
+      ready_for_display: true,
     });
     if (noteErr || !noteData || noteData.length === 0) {
       return dbErrorResponse("Supabase error (insertNote):", noteErr);
