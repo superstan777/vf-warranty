@@ -1,14 +1,13 @@
 import { createClient } from "@/utils/supabase/client";
-import type { Tables } from "@/types/supabase";
+import type { Tables, TablesInsert } from "@/types/supabase";
 
 type Attachment = Tables<"attachments">;
-type Note = Tables<"notes">;
+type InsertNote = TablesInsert<"notes">;
 export type AttachmentWithUrl = Attachment & { url: string };
 
 const supabase = createClient();
 
 export async function getNotesWithAttachmentsByClaimId(claimId: string) {
-  // 1. Pobieramy notatki
   const { data: notes, error: notesError } = await supabase
     .from("notes")
     .select("*")
@@ -17,7 +16,6 @@ export async function getNotesWithAttachmentsByClaimId(claimId: string) {
 
   if (notesError) return { notes: null, error: notesError };
 
-  // 2. Pobieramy wszystkie attachmenty dla tych notatek
   const noteIds = notes.map((n) => n.id);
   const { data: attachments, error: attachmentsError } = await supabase
     .from("attachments")
@@ -30,7 +28,6 @@ export async function getNotesWithAttachmentsByClaimId(claimId: string) {
   const groupedAttachments = attachments.reduce((acc, att) => {
     if (!acc[att.note_id]) acc[att.note_id] = [];
 
-    // Poprawne pobranie URL
     const {
       data: { publicUrl },
     } = supabase.storage.from("attachments").getPublicUrl(att.path);
@@ -51,11 +48,8 @@ export const insertNote = async ({
   content,
   user_name,
   origin,
-  graph_id = null,
-}: Pick<
-  Note,
-  "claim_id" | "content" | "user_name" | "origin" | "graph_id"
->) => {
+  graph_id,
+}: InsertNote) => {
   const { data, error } = await supabase
     .from("notes")
     .insert({ claim_id, content, user_name, origin, graph_id })

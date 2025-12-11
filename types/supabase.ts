@@ -106,6 +106,7 @@ export type Database = {
           graph_id: string | null;
           id: string;
           origin: Database["public"]["Enums"]["origin"];
+          ready_for_display: boolean;
           user_name: string;
         };
         Insert: {
@@ -115,6 +116,7 @@ export type Database = {
           graph_id?: string | null;
           id?: string;
           origin: Database["public"]["Enums"]["origin"];
+          ready_for_display?: boolean;
           user_name: string;
         };
         Update: {
@@ -124,6 +126,7 @@ export type Database = {
           graph_id?: string | null;
           id?: string;
           origin?: Database["public"]["Enums"]["origin"];
+          ready_for_display?: boolean;
           user_name?: string;
         };
         Relationships: [
