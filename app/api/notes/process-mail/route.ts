@@ -127,11 +127,18 @@ export async function POST(req: NextRequest) {
     }
 
     if (success === attachments.length) {
-      await markNoteAsReady(noteId);
+      const { data: updatedNote, error: markError } = await markNoteAsReady(
+        noteId
+      );
+      if (markError || !updatedNote) {
+        console.error("Failed to mark note as ready:", markError);
+        return dbErrorResponse("Supabase error (markNoteAsReady):", markError);
+      }
+
       return apiResponse(
         "Note added. All attachments uploaded.",
         true,
-        { note, attachments_added: success },
+        { note: updatedNote, attachments_added: success },
         201
       );
     }
