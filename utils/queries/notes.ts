@@ -15,6 +15,7 @@ export async function getNotesWithAttachmentsByClaimId(claimId: string) {
     .from("notes")
     .select("*")
     .eq("claim_id", claimId)
+    .eq("ready_for_display", true)
     .order("created_at", { ascending: false });
 
   if (notesError) return { notes: null, error: notesError };
