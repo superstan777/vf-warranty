@@ -56,24 +56,23 @@ export async function POST(req: NextRequest) {
 
     if (!claim) {
       return apiResponse(
-        `Incident ${normalizedInc} does not exist.`,
+        `Incident ${normalizedInc} does not exist. Message processed.`,
         true,
         undefined,
-        404,
+        200,
         "INCIDENT_NOT_FOUND"
       );
     }
 
     if (claim.status !== "in_progress") {
       return apiResponse(
-        `Incident ${normalizedInc} is resolved or cancelled.`,
+        `Incident ${normalizedInc} is resolved or cancelled. Message processed.`,
         true,
         undefined,
-        409,
+        200,
         "INCIDENT_NOT_IN_PROGRESS"
       );
     }
-
     const cleanText = htmlToText(content, { wordwrap: false }).trim();
 
     const { data: noteData, error: noteError } = await insertNote({
