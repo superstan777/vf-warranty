@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import { htmlToText } from "html-to-text";
-
 import { normalizeIncNumber } from "@/utils/utils";
 import { getClaimByIncNumber } from "@/utils/queries/claims";
 import { insertNote, markNoteAsReady } from "@/utils/queries/notes";
@@ -12,7 +11,6 @@ import {
   dbErrorResponse,
 } from "@/utils/backendUtils";
 
-// Typ załączników dostarczanych przez bota
 interface IncomingAttachment {
   graph_id: string;
   file_name: string;
@@ -31,7 +29,7 @@ export async function POST(req: NextRequest) {
       origin,
       inc_number,
       graph_id,
-      attachments = [], // array[] lub brak
+      attachments = [],
     } = await req.json();
 
     if (!content || !inc_number) {
@@ -44,42 +42,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Normalize INC
     const normalizedInc = normalizeIncNumber(inc_number);
-
-    // Fetch claim
     const { data: claim, error: claimError } = await getClaimByIncNumber(
       normalizedInc
     );
+
     if (claimError) {
       return dbErrorResponse(
         "Supabase error (getClaimByIncNumber):",
         claimError
       );
     }
+
     if (!claim) {
       return apiResponse(
         `Incident ${normalizedInc} does not exist.`,
-        false,
+        true,
         undefined,
         404,
         "INCIDENT_NOT_FOUND"
       );
     }
+
     if (claim.status !== "in_progress") {
       return apiResponse(
         `Incident ${normalizedInc} is resolved or cancelled.`,
-        false,
+        true,
         undefined,
         409,
         "INCIDENT_NOT_IN_PROGRESS"
       );
     }
 
-    // Clean text
     const cleanText = htmlToText(content, { wordwrap: false }).trim();
 
-    // Create note (ready_for_display = false)
     const { data: noteData, error: noteError } = await insertNote({
       claim_id: claim.id,
       content: cleanText,
@@ -95,13 +91,11 @@ export async function POST(req: NextRequest) {
     const note = noteData[0];
     const noteId = note.id;
 
-    // If no attachments → note ready immediately
     if (!attachments.length) {
       await markNoteAsReady(noteId);
       return apiResponse("Note added (no attachments).", true, { note }, 201);
     }
 
-    // --- PROCESS ATTACHMENTS ---
     let success = 0;
 
     for (const att of attachments as IncomingAttachment[]) {
@@ -133,10 +127,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // All attachments added → mark as ready
     if (success === attachments.length) {
       await markNoteAsReady(noteId);
-
       return apiResponse(
         "Note added. All attachments uploaded.",
         true,
@@ -145,16 +137,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Some attachments failed
     return apiResponse(
-      `Note added, but only ${success}/${attachments.length} attachments uploaded.`,
+      `Failed to add note. The system will retry processing this message in the next polling cycle.`,
       false,
-      {
-        note,
-        attachments_added: success,
-        attachments_missing: attachments.length - success,
-      },
-      207, // Multi-Status
+      undefined,
+      500,
       "ATTACHMENTS_PARTIAL_FAILURE"
     );
   } catch (err) {
