@@ -3,7 +3,10 @@ import type { Tables, TablesInsert } from "@/types/supabase";
 
 type Attachment = Tables<"attachments">;
 type InsertNote = TablesInsert<"notes">;
-export type AttachmentWithUrl = Attachment & { url: string };
+export type AttachmentWithUrl = Omit<Attachment, "graph_id"> & {
+  graph_id?: string;
+  url: string;
+};
 
 const supabase = createClient();
 
