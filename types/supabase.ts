@@ -42,18 +42,21 @@ export type Database = {
       attachments: {
         Row: {
           created_at: string;
+          graph_id: string;
           id: string;
           note_id: string;
           path: string;
         };
         Insert: {
           created_at?: string;
+          graph_id: string;
           id?: string;
           note_id: string;
           path: string;
         };
         Update: {
           created_at?: string;
+          graph_id?: string;
           id?: string;
           note_id?: string;
           path?: string;

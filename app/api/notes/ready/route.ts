@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { updateNoteVisibility } from "@/utils/queries/notes";
+import { markNoteAsReady } from "@/utils/queries/notes";
 import {
   checkRequestAuth,
   apiResponse,
@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const { data, error } = await updateNoteVisibility(note_id, true);
+    const { data, error } = await markNoteAsReady(note_id, true);
 
     if (error) {
       return dbErrorResponse("Supabase error (updateNoteVisibility):", error);

@@ -68,7 +68,7 @@ export const insertNote = async (payload: InsertNote) => {
   return { data, error };
 };
 
-export const updateNoteVisibility = async (note_id: string, ready = true) => {
+export const markNoteAsReady = async (note_id: string, ready = true) => {
   const { data, error } = await supabase
     .from("notes")
     .update({ ready_for_display: ready })

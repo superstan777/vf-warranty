@@ -1,17 +1,18 @@
 import { createClient } from "@/utils/supabase/client";
-import type { Tables } from "@/types/supabase";
+import type { TablesInsert } from "@/types/supabase";
 
-type Attachment = Tables<"attachments">;
+type Attachment = TablesInsert<"attachments">;
 
 const supabase = createClient();
 
 export const insertAttachment = async ({
   note_id,
   path,
-}: Pick<Attachment, "note_id" | "path">) => {
+  graph_id,
+}: Attachment) => {
   const { data, error } = await supabase
     .from("attachments")
-    .insert({ note_id, path })
+    .insert({ note_id, path, graph_id })
     .select();
 
   return { data, error };
