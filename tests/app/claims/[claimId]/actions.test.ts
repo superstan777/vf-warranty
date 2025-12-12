@@ -35,6 +35,7 @@ describe("addNote", () => {
           created_at: new Date().toISOString(),
           user_name: "John",
           origin: "app",
+          ready_for_display: true,
         },
       ],
       error: null,
@@ -49,6 +50,7 @@ describe("addNote", () => {
       content: "Test note",
       user_name: "John",
       origin: "app",
+      ready_for_display: true,
     });
 
     expect(revalidatePath).toHaveBeenCalledWith("/claims/claim-1");
