@@ -75,6 +75,16 @@ export async function POST(req: NextRequest) {
     }
     const cleanText = htmlToText(content, { wordwrap: false }).trim();
 
+    if (!cleanText) {
+      return apiResponse(
+        "Message has no meaningful content. Skipped note creation.",
+        true,
+        undefined,
+        200,
+        "EMPTY_NOTE_CONTENT"
+      );
+    }
+
     const { data: noteData, error: noteError } = await insertNote({
       claim_id: claim.id,
       content: cleanText,
