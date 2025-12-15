@@ -31,3 +31,12 @@ export const uploadToStorage = async (
     });
   return { data, error };
 };
+
+export async function getAttachmentsByGraphIds(graphIds: string[]) {
+  if (!graphIds.length) return { data: [], error: null };
+
+  return supabase
+    .from("attachments")
+    .select("graph_id")
+    .in("graph_id", graphIds);
+}

@@ -82,3 +82,7 @@ export const markNoteAsReady = async (note_id: string, ready = true) => {
 
   return { data, error };
 };
+
+export async function getNoteByGraphId(graph_id: string) {
+  return supabase.from("notes").select("*").eq("graph_id", graph_id).single();
+}

@@ -2,9 +2,16 @@ import { NextRequest } from "next/server";
 import { htmlToText } from "html-to-text";
 import { normalizeIncNumber } from "@/utils/utils";
 import { getClaimByIncNumber } from "@/utils/queries/claims";
-import { insertNote, markNoteAsReady } from "@/utils/queries/notes";
-import { insertAttachment, uploadToStorage } from "@/utils/queries/attachments";
-
+import {
+  insertNote,
+  markNoteAsReady,
+  getNoteByGraphId,
+} from "@/utils/queries/notes";
+import {
+  insertAttachment,
+  uploadToStorage,
+  getAttachmentsByGraphIds,
+} from "@/utils/queries/attachments";
 import {
   checkRequestAuth,
   apiResponse,
@@ -32,13 +39,24 @@ export async function POST(req: NextRequest) {
       attachments = [],
     } = await req.json();
 
-    if (!content || !inc_number) {
+    if (!inc_number || !graph_id) {
       return apiResponse(
-        "Message content and incident number are required.",
+        "Incident number and graph_id are required.",
         false,
         undefined,
         400,
         "MISSING_FIELDS"
+      );
+    }
+
+    const cleanText = htmlToText(content || "", { wordwrap: false }).trim();
+    if (!cleanText) {
+      return apiResponse(
+        "Message has no meaningful content.",
+        true,
+        undefined,
+        200,
+        "EMPTY_NOTE_CONTENT"
       );
     }
 
@@ -54,107 +72,92 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!claim) {
+    if (!claim || claim.status !== "in_progress") {
       return apiResponse(
-        `Incident ${normalizedInc} does not exist. Message processed.`,
+        "Incident not eligible for notes. Message processed.",
         true,
         undefined,
-        200,
-        "INCIDENT_NOT_FOUND"
+        200
       );
     }
 
-    if (claim.status !== "in_progress") {
-      return apiResponse(
-        `Incident ${normalizedInc} is resolved or cancelled. Message processed.`,
-        true,
-        undefined,
-        200,
-        "INCIDENT_NOT_IN_PROGRESS"
-      );
+    let note;
+    const { data: existingNote } = await getNoteByGraphId(graph_id);
+
+    if (existingNote) {
+      note = existingNote;
+    } else {
+      const { data, error } = await insertNote({
+        claim_id: claim.id,
+        content: cleanText,
+        user_name,
+        origin,
+        graph_id,
+      });
+
+      if (error || !data?.length) {
+        return dbErrorResponse("Supabase error (insertNote):", error);
+      }
+
+      note = data[0];
     }
-    const cleanText = htmlToText(content, { wordwrap: false }).trim();
-
-    if (!cleanText) {
-      return apiResponse(
-        "Message has no meaningful content. Skipped note creation.",
-        true,
-        undefined,
-        200,
-        "EMPTY_NOTE_CONTENT"
-      );
-    }
-
-    const { data: noteData, error: noteError } = await insertNote({
-      claim_id: claim.id,
-      content: cleanText,
-      user_name,
-      origin,
-      graph_id,
-    });
-
-    if (noteError || !noteData?.length) {
-      return dbErrorResponse("Supabase error (insertNote):", noteError);
-    }
-
-    const note = noteData[0];
-    const noteId = note.id;
 
     if (!attachments.length) {
-      await markNoteAsReady(noteId);
-      return apiResponse("Note added (no attachments).", true, { note }, 201);
+      await markNoteAsReady(note.id);
+      return apiResponse("Note processed.", true, { note }, 200);
     }
 
-    let success = 0;
+    const incomingGraphIds = attachments.map(
+      (a: IncomingAttachment) => a.graph_id
+    );
+    const { data: existingAttachments } = await getAttachmentsByGraphIds(
+      incomingGraphIds
+    );
+
+    const existingIds = new Set(
+      existingAttachments?.map((a) => a.graph_id) || []
+    );
+
+    let added = 0;
 
     for (const att of attachments as IncomingAttachment[]) {
-      try {
-        const fileBuffer = Buffer.from(att.content_base_64, "base64");
-        const storagePath = `${claim.id}/${noteId}/${att.file_name}`;
+      if (existingIds.has(att.graph_id)) {
+        continue;
+      }
 
-        const { error: uploadError, data: uploadData } = await uploadToStorage(
-          storagePath,
-          fileBuffer,
+      try {
+        const buffer = Buffer.from(att.content_base_64, "base64");
+        const path = `${claim.id}/${note.id}/${att.file_name}`;
+
+        const { error: uploadError } = await uploadToStorage(
+          path,
+          buffer,
           att.content_type
         );
-
         if (uploadError) throw uploadError;
 
-        const finalPath = uploadData?.path ?? storagePath;
-
         const { error: attachError } = await insertAttachment({
-          note_id: noteId,
-          path: finalPath,
+          note_id: note.id,
+          path,
           graph_id: att.graph_id,
         });
-
         if (attachError) throw attachError;
 
-        success++;
+        added++;
       } catch (err) {
-        console.error("Failed to handle attachment:", err);
+        console.error("Attachment failed:", err);
       }
     }
 
-    if (success === attachments.length) {
-      const { data: updatedNote, error: markError } = await markNoteAsReady(
-        noteId
-      );
-      if (markError || !updatedNote) {
-        console.error("Failed to mark note as ready:", markError);
-        return dbErrorResponse("Supabase error (markNoteAsReady):", markError);
-      }
+    const totalAttachments = existingIds.size + added;
 
-      return apiResponse(
-        "Note added. All attachments uploaded.",
-        true,
-        { note: updatedNote, attachments_added: success },
-        201
-      );
+    if (totalAttachments === attachments.length) {
+      await markNoteAsReady(note.id);
+      return apiResponse("Note processed.", true, { note }, 200);
     }
 
     return apiResponse(
-      `Failed to add note. The system will retry processing this message in the next polling cycle.`,
+      "Partial attachment upload. Will retry.",
       false,
       undefined,
       500,
@@ -167,8 +170,7 @@ export async function POST(req: NextRequest) {
       false,
       undefined,
       500,
-      "UNHANDLED_EXCEPTION",
-      err
+      "UNHANDLED_EXCEPTION"
     );
   }
 }
