@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
     }
 
     return apiResponse(
-      "Partial attachment upload. Will retry.",
+      "Partial attachment upload. Will retry in 15 minutes.",
       false,
       undefined,
       500,
